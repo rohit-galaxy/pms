@@ -10,7 +10,7 @@ class Config:
     MYSQL_DB = "product_db"
     MYSQL_CURSORCLASS = "DictCursor"
 
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+    UPLOAD_FOLDER = os.path.join(BASE_DIR,"app", "static", "uploads")
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
 
     MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2 MB upload limit

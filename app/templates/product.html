@@ -75,72 +75,74 @@
     </main>
 
     <!-- Product Modal -->
-    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
-        <form id="productForm" enctype="multipart/form-data" novalidate>
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 id="modalTitle" class="modal-title">Add Product</h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-              ></button>
-            </div>
-            <div class="modal-body">
-              <input type="hidden" id="productId" name="productId" />
-              <div class="mb-3">
-                <label for="name" class="form-label"
-                  >Product Name<span class="required-asterisk">*</span></label
-                >
-                <input type="text" id="name" name="name" class="form-control" />
-              </div>
-              <div class="mb-3">
-                <label for="category" class="form-label"
-                  >Category<span class="required-asterisk">*</span></label
-                >
-                <select id="category" name="category_id" class="form-select">
-                  <option value="">Select Category</option>
-                  {% for c in categories %}
-                  <option value="{{ c.id }}">{{ c.name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="brand" class="form-label"
-                  >Brand<span class="required-asterisk">*</span></label
-                >
-                <select id="brand" name="brand_id" class="form-select">
-                  <option value="">Select Brand</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="image" class="form-label">Image (optional)</label>
-                <input
-                  type="file"
-                  name="image"
-                  id="image"
-                  class="form-control"
-                  accept=".png,.jpg,.jpeg"
-                />
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button type="submit" class="btn btn-primary" id="saveBtn">
-                Save
-              </button>
-            </div>
+    <!-- Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="productForm" enctype="multipart/form-data" novalidate>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="modalTitle" class="modal-title">Add Product</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="productId" name="productId" />
+          <div class="mb-3">
+            <label for="name" class="form-label"
+              >Product Name<span class="required-asterisk">*</span></label
+            >
+            <input type="text" id="name" name="name" class="form-control" />
           </div>
-        </form>
+          <div class="mb-3">
+            <label for="category" class="form-label"
+              >Category<span class="required-asterisk">*</span></label
+            >
+            <select id="category" name="category_id" class="form-select">
+              <option value="">Select Category</option>
+              {% for c in categories %}
+              <option value="{{ c.id }}">{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="brand" class="form-label"
+              >Brand<span class="required-asterisk">*</span></label
+            >
+            <select id="brand" name="brand_id" class="form-select">
+              <option value="">Select Brand</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="image" class="form-label">Image (optional)</label>
+            <input
+              type="file"
+              name="image"
+              id="image"
+              class="form-control"
+              accept="image/jpeg, image/png"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">
+            Save
+          </button>
+        </div>
       </div>
-    </div>
+    </form>
+  </div>
+</div>
+
 
     {% include 'footer.html' %}
 

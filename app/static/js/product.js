@@ -92,13 +92,14 @@ $(function () {
     });
   });
 
-  // Status toggle with confirmation
-  $("#productTable").on("change", ".status-toggle", function (e) {
-    e.preventDefault();
+  // Status toggle with confirmation and proper revert handling
+  $("#productTable").on("change", ".status-toggle", function () {
     let checkbox = $(this);
     let id = checkbox.data("id");
+    let originalState = checkbox.prop("checked");
 
-    checkbox.prop("checked", !checkbox.is(":checked"));
+    // Disable checkbox to avoid multiple clicks
+    checkbox.prop("disabled", true);
 
     Swal.fire({
       title: "Are you sure?",
@@ -118,9 +119,19 @@ $(function () {
               "bg-success"
             );
           } else {
+            checkbox.prop("checked", !originalState); // revert state on failure
             showToast("Status change failed", "bg-danger");
           }
+        }).fail(function () {
+          checkbox.prop("checked", !originalState); // revert on ajax error
+          showToast("Server error during status change", "bg-danger");
+        }).always(function () {
+          checkbox.prop("disabled", false);
         });
+      } else {
+        // User cancelled, revert checkbox
+        checkbox.prop("checked", !originalState);
+        checkbox.prop("disabled", false);
       }
     });
   });
