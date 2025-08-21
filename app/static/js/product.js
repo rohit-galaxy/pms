@@ -36,6 +36,7 @@ $(function () {
     $("#productForm")[0].reset();
     $("#productId").val("");
     $("#brand").html('<option value="">Select Brand</option>').trigger("change");
+    $("#product_code").val(""); // clear product code for new entry
     $("#productForm").validate().resetForm();
     $("#productForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
     modal.show();
@@ -45,12 +46,16 @@ $(function () {
   $("#productTable").on("click", ".btn-edit", function () {
     let tr = $(this).closest("tr");
     let id = tr.data("id");
+
     $.getJSON(`/product/get/${id}`, function (data) {
       $("#modalTitle").text("Edit Product");
       $("#productId").val(data.id);
       $("#name").val(data.name);
+      $("#product_code").val(data.product_code || ""); // set product code
+
       $("#category").val(data.category_id).trigger("change");
 
+      // Wait for category brands to load
       $.getJSON("/brands/" + data.category_id, function (brands) {
         let options = '<option value="">Select Brand</option>';
         $.each(brands, function (i, brand) {
@@ -58,6 +63,7 @@ $(function () {
         });
         $("#brand").html(options);
         $("#brand").val(data.brand_id).trigger("change");
+
         $("#productForm").validate().resetForm();
         $("#productForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
         modal.show();
@@ -92,13 +98,12 @@ $(function () {
     });
   });
 
-  // Status toggle with confirmation and proper revert handling
+  // Toggle status with confirmation
   $("#productTable").on("change", ".status-toggle", function () {
     let checkbox = $(this);
     let id = checkbox.data("id");
     let originalState = checkbox.prop("checked");
 
-    // Disable checkbox to avoid multiple clicks
     checkbox.prop("disabled", true);
 
     Swal.fire({
@@ -119,24 +124,23 @@ $(function () {
               "bg-success"
             );
           } else {
-            checkbox.prop("checked", !originalState); // revert state on failure
+            checkbox.prop("checked", !originalState);
             showToast("Status change failed", "bg-danger");
           }
         }).fail(function () {
-          checkbox.prop("checked", !originalState); // revert on ajax error
+          checkbox.prop("checked", !originalState);
           showToast("Server error during status change", "bg-danger");
         }).always(function () {
           checkbox.prop("disabled", false);
         });
       } else {
-        // User cancelled, revert checkbox
         checkbox.prop("checked", !originalState);
         checkbox.prop("disabled", false);
       }
     });
   });
 
-  // Custom regex validator for product name
+  // Custom name validation
   $.validator.addMethod(
     "regex",
     function (value, element, pattern) {
@@ -146,7 +150,7 @@ $(function () {
     "Invalid format"
   );
 
-  // Form validation
+  // Product form validation
   $("#productForm").validate({
     rules: {
       name: {

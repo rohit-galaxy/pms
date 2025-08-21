@@ -24,23 +24,29 @@ def get_product(id):
 @product_bp.route("/product/create", methods=["POST"])
 def create():
     name = request.form.get("name")
+    product_code = request.form.get("product_code")  # new field
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
+    
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
-    create_product(name, category_id, brand_id, file, current_app)
+    
+    create_product(name, category_id, brand_id, product_code, file, current_app)
     return jsonify({"success": True, "message": "Product created successfully."})
 
 @product_bp.route("/product/update/<int:id>", methods=["POST"])
 def update(id):
     name = request.form.get("name")
+    product_code = request.form.get("product_code")  # new field
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
+    
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
-    update_product(id, name, category_id, brand_id, file, current_app)
+    
+    update_product(id, name, category_id, brand_id, product_code, file, current_app)
     return jsonify({"success": True, "message": "Product updated successfully."})
 
 @product_bp.route("/product/toggle-status/<int:id>", methods=["POST"])

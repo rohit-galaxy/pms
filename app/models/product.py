@@ -1,5 +1,6 @@
 import os
 import uuid
+import random
 from werkzeug.utils import secure_filename
 from app import get_connection
 
@@ -7,7 +8,8 @@ def fetch_all_products():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     query = """
-        SELECT p.id, p.name, p.status, c.name AS category_name, b.name AS brand_name, p.image_path
+        SELECT p.id, p.name, p.status, p.product_code,
+               c.name AS category_name, b.name AS brand_name, p.image_path
         FROM product p
         JOIN product_category c ON p.category_id = c.id
         JOIN product_brand b ON p.brand_id = b.id
@@ -29,28 +31,52 @@ def fetch_product_by_id(product_id):
     conn.close()
     return product
 
-def create_product(name, category_id, brand_id, file, app):
+def generate_unique_product_code():
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    while True:
+        random_number = random.randint(10000, 99999)
+        code = f"RDS{random_number}"
+        cursor.execute("SELECT 1 FROM product WHERE product_code = %s", (code,))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return code
+
+def create_product(name, category_id, brand_id, product_code, file, app):
     filename = None
     if file and file.filename and allowed_file(file.filename, app):
         filename = secure_filename(str(uuid.uuid4()) + "_" + file.filename)
         save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         file.save(save_path)
+
+    # Generate product code if not given
+    if not product_code:
+        product_code = generate_unique_product_code()
+
     conn = get_connection()
     cursor = conn.cursor()
-    sql = "INSERT INTO product (name, category_id, brand_id, image_path, status) VALUES (%s, %s, %s, %s, '1')"
-    cursor.execute(sql, (name, category_id, brand_id, filename))
+    sql = """
+        INSERT INTO product (name, category_id, brand_id, image_path, status, product_code)
+        VALUES (%s, %s, %s, %s, '1', %s)
+    """
+    cursor.execute(sql, (name, category_id, brand_id, filename, product_code))
     conn.commit()
     cursor.close()
     conn.close()
 
-def update_product(product_id, name, category_id, brand_id, file, app):
+def update_product(product_id, name, category_id, brand_id, product_code, file, app):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
+
+    # Get old image if exists
     cursor.execute("SELECT image_path FROM product WHERE id=%s", (product_id,))
     old = cursor.fetchone()
     old_img = old["image_path"] if old else None
     cursor.close()
+
     filename = old_img
     if file and file.filename and allowed_file(file.filename, app):
         filename = secure_filename(str(uuid.uuid4()) + "_" + file.filename)
@@ -62,9 +88,17 @@ def update_product(product_id, name, category_id, brand_id, file, app):
                 os.remove(os.path.join(app.config["UPLOAD_FOLDER"], old_img))
             except Exception:
                 pass
+
+    if not product_code:
+        product_code = generate_unique_product_code()
+
     cursor = conn.cursor()
-    sql = "UPDATE product SET name=%s, category_id=%s, brand_id=%s, image_path=%s WHERE id=%s"
-    cursor.execute(sql, (name, category_id, brand_id, filename, product_id))
+    sql = """
+        UPDATE product
+        SET name=%s, category_id=%s, brand_id=%s, image_path=%s, product_code=%s
+        WHERE id=%s
+    """
+    cursor.execute(sql, (name, category_id, brand_id, filename, product_code, product_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -78,6 +112,7 @@ def toggle_product_status(product_id):
         cursor.close()
         conn.close()
         return None
+
     new_status = "0" if row["status"] == "1" else "1"
     cursor.execute("UPDATE product SET status=%s WHERE id=%s", (new_status, product_id))
     conn.commit()
