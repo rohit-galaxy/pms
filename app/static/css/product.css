@@ -1,0 +1,23 @@
+.form-switch .form-check-input {
+  width: 3em;
+  height: 1.5em;
+  margin-left: -2.5em;
+}
+.form-switch .form-check-input:checked {
+  background-color: #4cd137;
+  border-color: #4cd137;
+}
+.form-switch .form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(76, 209, 55, 0.5);
+}
+.required-asterisk {
+  color: red;
+  font-weight: bold;
+  margin-left: 4px;
+}
+.error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
