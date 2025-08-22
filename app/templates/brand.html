@@ -52,12 +52,12 @@
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label for="brandName" class="form-label">Brand Name</label>
+            <label for="brandName" class="form-label">Brand Name<span class="required-asterisk">*</span></label>
             <input type="text" class="form-control" id="brandName" name="name" required autocomplete="off" />
             <div id="nameError" class="error-message d-none"></div>
           </div>
           <div class="mb-3">
-            <label for="categorySelect" class="form-label">Category</label>
+            <label for="categorySelect" class="form-label">Category<span class="required-asterisk">*</span></label>
             <select class="form-select" id="categorySelect" name="category_id" required>
               <option value="">Select Category</option>
               {% for c in categories %}

@@ -32,6 +32,7 @@ $(function () {
     $("#productId").val("");
     $("#brand").html('<option value="">Select Brand</option>').trigger("change");
     $("#product_code").val("");
+    $("#productCodeContainer").hide();  // Hide product code on add
     $("#productForm").validate().resetForm();
     $("#productForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
     modal.show();
@@ -47,6 +48,7 @@ $(function () {
       $("#productId").val(data.id);
       $("#name").val(data.name);
       $("#product_code").val(data.product_code || "");
+      $("#productCodeContainer").show();  // Show product code on edit
       $("#category").val(data.category_id).trigger("change");
 
       // Load brands for the selected category & set selected brand
@@ -132,7 +134,7 @@ $(function () {
     });
   });
 
-  // Custom name validation
+  // Custom name format validation method
   $.validator.addMethod(
     "regex",
     function (value, element, pattern) {
@@ -142,22 +144,49 @@ $(function () {
     "Invalid format"
   );
 
+  // Custom validation method for unique product name
+  $.validator.addMethod("uniqueProductName", function(value, element) {
+    var isSuccess = false;
+    if (!value) return true; // Skip empty
+
+    var excludeId = $("#productId").val() || null;
+
+    $.ajax({
+      url: "/product/check-name",
+      type: "GET",
+      data: { name: value, exclude_id: excludeId },
+      async: false,  // synchronous call required for jQuery Validate
+      success: function(res) {
+        isSuccess = !res.exists;
+      },
+      error: function() {
+        isSuccess = true;  // On error, don’t block form submission
+      }
+    });
+    return isSuccess;
+  }, "This product name already exists.");
+
   // Product form validation & in-place insert/update
   $("#productForm").validate({
     rules: {
-      name: { required: true, regex: "^[A-Za-z0-9\\s\\-\\_\\.,'()%]{2,50}$" },
+      name: {
+        required: true,
+        regex: "^[A-Za-z0-9\\s\\-\\_\\.,'()%]{2,50}$",
+        uniqueProductName: true
+      },
       category_id: { required: true },
       brand_id: { required: true },
-      image: { extension: "png|jpg|jpeg" },
+      image: { extension: "png|jpg|jpeg" }
     },
     messages: {
       name: {
         required: "Please enter product name",
         regex: "Name must be 2–50 characters: letters, numbers, spaces, and - _ . , ' ( ) % only",
+        uniqueProductName: "This product name already exists."
       },
       category_id: { required: "Please select a category" },
       brand_id: { required: "Please select a brand" },
-      image: { extension: "Only png, jpg, jpeg files are allowed" },
+      image: { extension: "Only png, jpg, jpeg files are allowed" }
     },
     errorElement: "div",
     errorClass: "error",
@@ -190,16 +219,12 @@ $(function () {
             // Hide modal and update/inject row in-place!
             modal.hide();
 
-            // Build the new row HTML (id, code, name, category, brand, image, status, actions)
-            // This assumes your backend returns all required product fields in res.product or similar.
             let product = res.product || res.new_product || res.data;
-            // Fallbacks for legacy: if only 'id' is given, reload page
             if (!product && !(res.id || res.new_id)) {
               setTimeout(() => location.reload(), 800);
               return;
             }
 
-            // Find brand/category names from select2 for live update
             let catName = $("#category option:selected").text();
             let brandName = $("#brand option:selected").text();
             let imgHtml = product && product.image_path
@@ -225,15 +250,12 @@ $(function () {
             ];
 
             if (id) {
-              // Editing existing: update DataTable row in place
               let tr = $(`#productTable tbody tr[data-id='${id}']`);
               let trow = table.row(tr);
               trow.data(rowData).draw(false);
             } else {
-              // New: add to DataTable and set row attribute
               let rowNode = table.row.add(rowData).draw(false).node();
               $(rowNode).attr("data-id", product.id || res.id || res.new_id);
-              // Set classes for further selects if needed
             }
             showToast(id ? "Product updated successfully" : "Product added successfully", "bg-success");
           } else {

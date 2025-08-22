@@ -4,6 +4,7 @@ import random
 from werkzeug.utils import secure_filename
 from app import get_connection
 
+
 def fetch_all_products():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -22,6 +23,7 @@ def fetch_all_products():
     conn.close()
     return products
 
+
 def fetch_product_by_id(product_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -30,6 +32,7 @@ def fetch_product_by_id(product_id):
     cursor.close()
     conn.close()
     return product
+
 
 def generate_unique_product_code():
     conn = get_connection()
@@ -43,6 +46,7 @@ def generate_unique_product_code():
             cursor.close()
             conn.close()
             return code
+
 
 def create_product(name, category_id, brand_id, product_code, file, app):
     filename = None
@@ -67,7 +71,8 @@ def create_product(name, category_id, brand_id, product_code, file, app):
     cursor.close()
     conn.close()
 
-def update_product(product_id, name, category_id, brand_id, product_code, file, app):
+
+def update_product(product_id, name, category_id, brand_id, file, app):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -89,19 +94,17 @@ def update_product(product_id, name, category_id, brand_id, product_code, file, 
             except Exception:
                 pass
 
-    if not product_code:
-        product_code = generate_unique_product_code()
-
     cursor = conn.cursor()
     sql = """
         UPDATE product
-        SET name=%s, category_id=%s, brand_id=%s, image_path=%s, product_code=%s
+        SET name=%s, category_id=%s, brand_id=%s, image_path=%s
         WHERE id=%s
     """
-    cursor.execute(sql, (name, category_id, brand_id, filename, product_code, product_id))
+    cursor.execute(sql, (name, category_id, brand_id, filename, product_id))
     conn.commit()
     cursor.close()
     conn.close()
+
 
 def toggle_product_status(product_id):
     conn = get_connection()
@@ -120,6 +123,7 @@ def toggle_product_status(product_id):
     conn.close()
     return new_status
 
+
 def soft_delete_product(product_id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -128,8 +132,25 @@ def soft_delete_product(product_id):
     cursor.close()
     conn.close()
 
+
 def allowed_file(filename, app):
     return (
         "." in filename and
         filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_IMAGE_EXTENSIONS"]
     )
+
+
+def check_product_name_exists(name, exclude_id=None):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    if exclude_id:
+        cursor.execute(
+            "SELECT id FROM product WHERE name = %s AND status != '2' AND id != %s",
+            (name, exclude_id)
+        )
+    else:
+        cursor.execute("SELECT id FROM product WHERE name = %s AND status != '2'", (name,))
+    product = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return product is not None

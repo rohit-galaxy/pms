@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 from app.models.product import (
     fetch_all_products, fetch_product_by_id, create_product,
-    update_product, toggle_product_status, soft_delete_product
+    update_product, toggle_product_status, soft_delete_product,
+    check_product_name_exists
 )
 from app.models.category import fetch_active_categories
 from app.models.brand import fetch_all_brands
@@ -18,7 +19,7 @@ def index():
 def get_product(id):
     product = fetch_product_by_id(id)
     if product:
-        return jsonify(product)    
+        return jsonify(product)
     return jsonify({"error": "Product not found"}), 404
 
 @product_bp.route("/product/create", methods=["POST"])
@@ -28,25 +29,24 @@ def create():
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
-    
+
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
-    
+
     create_product(name, category_id, brand_id, product_code, file, current_app)
     return jsonify({"success": True, "message": "Product created successfully."})
 
 @product_bp.route("/product/update/<int:id>", methods=["POST"])
 def update(id):
     name = request.form.get("name")
-    product_code = request.form.get("product_code")  # new field
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
-    
+
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
-    
-    update_product(id, name, category_id, brand_id, product_code, file, current_app)
+
+    update_product(id, name, category_id, brand_id, file, current_app)
     return jsonify({"success": True, "message": "Product updated successfully."})
 
 @product_bp.route("/product/toggle-status/<int:id>", methods=["POST"])
@@ -60,3 +60,14 @@ def toggle_status(id):
 def delete(id):
     soft_delete_product(id)
     return jsonify({"success": True, "message": "Product deleted successfully."})
+
+@product_bp.route("/product/check-name", methods=["GET"])
+def check_product_name():
+    name = request.args.get("name", "").strip()
+    exclude_id = request.args.get("exclude_id", default=None, type=int)
+
+    if not name:
+        return jsonify({"exists": False})
+
+    exists = check_product_name_exists(name, exclude_id)
+    return jsonify({"exists": exists})
