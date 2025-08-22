@@ -44,4 +44,4 @@ def toggle_status(id):
 @category_bp.route("/category/delete/<int:id>", methods=["POST"])
 def delete(id):
     soft_delete_category(id)
-    return jsonify({"success": True, "message": "Category deleted (soft delete)."})
+    return jsonify({"success": True, "message": "Category deleted successfully."})

@@ -1,18 +1,15 @@
 $(function () {
   let modal = new bootstrap.Modal($("#productModal")[0]);
   let table = $("#productTable").DataTable();
-  $("#category, #brand").select2({
-    dropdownParent: $("#productModal"),
-    width: "100%",
-  });
 
-  // Load brands dynamically when category changes
+  // Select2
+  $("#category, #brand").select2({ dropdownParent: $("#productModal"), width: "100%" });
+
+  // Dynamic brands when category changes
   $("#category").on("change", function () {
     let categoryId = $(this).val();
     if (!categoryId) {
-      $("#brand")
-        .html('<option value="">Select Brand</option>')
-        .trigger("change");
+      $("#brand").html('<option value="">Select Brand</option>').trigger("change");
       $(this).valid();
       return;
     }
@@ -26,9 +23,7 @@ $(function () {
     });
   });
 
-  $("#brand").on("change", function () {
-    $(this).valid();
-  });
+  $("#brand").on("change", function () { $(this).valid(); });
 
   // Add product modal
   $("#btnAdd").click(function () {
@@ -36,7 +31,7 @@ $(function () {
     $("#productForm")[0].reset();
     $("#productId").val("");
     $("#brand").html('<option value="">Select Brand</option>').trigger("change");
-    $("#product_code").val(""); // clear product code for new entry
+    $("#product_code").val("");
     $("#productForm").validate().resetForm();
     $("#productForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
     modal.show();
@@ -51,11 +46,10 @@ $(function () {
       $("#modalTitle").text("Edit Product");
       $("#productId").val(data.id);
       $("#name").val(data.name);
-      $("#product_code").val(data.product_code || ""); // set product code
-
+      $("#product_code").val(data.product_code || "");
       $("#category").val(data.category_id).trigger("change");
 
-      // Wait for category brands to load
+      // Load brands for the selected category & set selected brand
       $.getJSON("/brands/" + data.category_id, function (brands) {
         let options = '<option value="">Select Brand</option>';
         $.each(brands, function (i, brand) {
@@ -63,7 +57,6 @@ $(function () {
         });
         $("#brand").html(options);
         $("#brand").val(data.brand_id).trigger("change");
-
         $("#productForm").validate().resetForm();
         $("#productForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
         modal.show();
@@ -88,7 +81,7 @@ $(function () {
       if (result.isConfirmed) {
         $.post(`/product/delete/${id}`, function (res) {
           if (res.success) {
-            table.row(tr).remove().draw();
+            table.row(tr).remove().draw(false);
             showToast(res.message || "Product deleted", "bg-success");
           } else {
             showToast("Delete failed", "bg-danger");
@@ -98,12 +91,11 @@ $(function () {
     });
   });
 
-  // Toggle status with confirmation
+  // Toggle status with SweetAlert2 confirmation
   $("#productTable").on("change", ".status-toggle", function () {
     let checkbox = $(this);
     let id = checkbox.data("id");
     let originalState = checkbox.prop("checked");
-
     checkbox.prop("disabled", true);
 
     Swal.fire({
@@ -150,37 +142,22 @@ $(function () {
     "Invalid format"
   );
 
-  // Product form validation
+  // Product form validation & in-place insert/update
   $("#productForm").validate({
     rules: {
-      name: {
-        required: true,
-        regex: "^[A-Za-z0-9\\s\\-\\_\\.,'()%]{2,50}$"
-      },
-      category_id: {
-        required: true,
-      },
-      brand_id: {
-        required: true,
-      },
-      image: {
-        extension: "png|jpg|jpeg",
-      },
+      name: { required: true, regex: "^[A-Za-z0-9\\s\\-\\_\\.,'()%]{2,50}$" },
+      category_id: { required: true },
+      brand_id: { required: true },
+      image: { extension: "png|jpg|jpeg" },
     },
     messages: {
       name: {
         required: "Please enter product name",
         regex: "Name must be 2–50 characters: letters, numbers, spaces, and - _ . , ' ( ) % only",
       },
-      category_id: {
-        required: "Please select a category",
-      },
-      brand_id: {
-        required: "Please select a brand",
-      },
-      image: {
-        extension: "Only png, jpg, jpeg files are allowed",
-      },
+      category_id: { required: "Please select a category" },
+      brand_id: { required: "Please select a brand" },
+      image: { extension: "Only png, jpg, jpeg files are allowed" },
     },
     errorElement: "div",
     errorClass: "error",
@@ -201,6 +178,7 @@ $(function () {
       let id = $("#productId").val();
       let url = id ? `/product/update/${id}` : "/product/create";
       let formData = new FormData(form);
+
       $.ajax({
         url: url,
         method: "POST",
@@ -209,17 +187,64 @@ $(function () {
         processData: false,
         success: function (res) {
           if (res.success) {
+            // Hide modal and update/inject row in-place!
             modal.hide();
-            setTimeout(() => location.reload(), 800);
+
+            // Build the new row HTML (id, code, name, category, brand, image, status, actions)
+            // This assumes your backend returns all required product fields in res.product or similar.
+            let product = res.product || res.new_product || res.data;
+            // Fallbacks for legacy: if only 'id' is given, reload page
+            if (!product && !(res.id || res.new_id)) {
+              setTimeout(() => location.reload(), 800);
+              return;
+            }
+
+            // Find brand/category names from select2 for live update
+            let catName = $("#category option:selected").text();
+            let brandName = $("#brand option:selected").text();
+            let imgHtml = product && product.image_path
+              ? `<img src="/static/uploads/${product.image_path}" width="50" alt="Product Image" />`
+              : "-";
+            let statusHtml = `<div class="form-check form-switch">
+                <input type="checkbox" class="form-check-input status-toggle" id="toggle-${product.id}" data-id="${product.id}" ${product.status == "1" ? "checked" : ""}>
+                <label class="form-check-label" for="toggle-${product.id}"></label>
+              </div>`;
+            let actionsHtml = `
+              <button class="btn btn-sm btn-info btn-edit">Edit</button>
+              <button class="btn btn-sm btn-danger btn-delete">Delete</button>
+            `;
+            let rowData = [
+              product.id,
+              product.product_code || "-",
+              product.name,
+              catName,
+              brandName,
+              imgHtml,
+              statusHtml,
+              actionsHtml
+            ];
+
+            if (id) {
+              // Editing existing: update DataTable row in place
+              let tr = $(`#productTable tbody tr[data-id='${id}']`);
+              let trow = table.row(tr);
+              trow.data(rowData).draw(false);
+            } else {
+              // New: add to DataTable and set row attribute
+              let rowNode = table.row.add(rowData).draw(false).node();
+              $(rowNode).attr("data-id", product.id || res.id || res.new_id);
+              // Set classes for further selects if needed
+            }
+            showToast(id ? "Product updated successfully" : "Product added successfully", "bg-success");
           } else {
-            alert(res.message || "Operation failed");
+            showToast(res.message || "Operation failed", "bg-danger");
           }
         },
         error: function () {
-          alert("Server error occurred");
-        },
+          showToast("Server error occurred", "bg-danger");
+        }
       });
-    },
+    }
   });
 
   // Toast helper

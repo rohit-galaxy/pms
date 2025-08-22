@@ -52,7 +52,7 @@ def toggle_status(id):
 @brand_bp.route("/brand/delete/<int:id>", methods=["POST"])
 def delete(id):
     soft_delete_brand(id)
-    return jsonify({"success": True, "message": "Brand deleted (soft delete)."})
+    return jsonify({"success": True, "message": "Brand deleted successfully."})
 
 @brand_bp.route("/brands/<int:category_id>")
 def get_brands(category_id):

@@ -59,4 +59,4 @@ def toggle_status(id):
 @product_bp.route("/product/delete/<int:id>", methods=["POST"])
 def delete(id):
     soft_delete_product(id)
-    return jsonify({"success": True, "message": "Product deleted (soft delete)."})
+    return jsonify({"success": True, "message": "Product deleted successfully."})
