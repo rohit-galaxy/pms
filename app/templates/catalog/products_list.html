@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+	<h3>{% if is_admin %}All Products{% else %}My Products{% endif %}</h3>
+	<a href="{{ url_for('catalog.products_create') }}" class="btn btn-primary">Add Product</a>
+</div>
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Title</th>
+			<th>Owner</th>
+			<th>Price</th>
+			<th>Qty</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for p in products %}
+		<tr>
+			<td>{{ p.title }}</td>
+			<td>{{ p.creator.get_full_name() }}</td>
+			<td>${{ '%.2f'|format(p.price) }}</td>
+			<td>{{ p.quantity }}</td>
+			<td>
+				<a class="btn btn-sm btn-secondary" href="{{ url_for('catalog.products_edit', product_id=p.id) }}">Edit</a>
+				<form method="post" action="{{ url_for('catalog.products_delete', product_id=p.id) }}" style="display:inline">
+					<button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('Delete this product?')">Delete</button>
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}

@@ -1,17 +1,28 @@
 import os
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+# Load environment variables from .env if present
+load_dotenv()
+
 
 class Config:
-    SECRET_KEY = "123"
-    MYSQL_HOST = "localhost"
-    MYSQL_USER = "root"
-    MYSQL_PASSWORD = "Admin@123"
-    MYSQL_DB = "product_db"
-    MYSQL_CURSORCLASS = "DictCursor"
+	SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 
-    UPLOAD_FOLDER = os.path.join(BASE_DIR,"app", "static", "uploads")
-    ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
+	# MySQL connection string example: mysql+pymysql://user:password@localhost:3306/dbname
+	SQLALCHEMY_DATABASE_URI = os.getenv(
+		"DATABASE_URL",
+		"mysql+pymysql://root:password@localhost:3306/flask_rbac_db",
+	)
+	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2 MB upload limit
+	# Flask-Migrate settings (optional)
+	DB_SCHEMA_NAME = os.getenv("DB_SCHEMA_NAME", "flask_rbac_db")
+
+
+class TestConfig(Config):
+	TESTING = True
+	SQLALCHEMY_DATABASE_URI = os.getenv(
+		"TEST_DATABASE_URL",
+		"sqlite+pysqlite:///:memory:",
+	)
 

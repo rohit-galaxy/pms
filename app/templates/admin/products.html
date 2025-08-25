@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}All Products{% endblock %}
+{% block content %}
+<h3>All Products</h3>
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Title</th>
+			<th>Owner</th>
+			<th>Price</th>
+			<th>Qty</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for p in products %}
+		<tr>
+			<td>{{ p.title }}</td>
+			<td>{{ p.creator.get_full_name() }}</td>
+			<td>${{ '%.2f'|format(p.price) }}</td>
+			<td>{{ p.quantity }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
