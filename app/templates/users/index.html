@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h4 class="mb-3">Users</h4>
+<table id="usersTable" class="table table-striped">
+	<thead>
+		<tr>
+			<th>ID</th>
+			<th>Name</th>
+			<th>Email</th>
+			<th>Admin</th>
+			<th>Status</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for u in users %}
+		<tr>
+			<td>{{ u.id }}</td>
+			<td>{{ u.name }}</td>
+			<td>{{ u.email }}</td>
+			<td>{{ 'Yes' if u.is_admin else 'No' }}</td>
+			<td>{{ u.status }}</td>
+			<td>
+				<button class="btn btn-sm btn-secondary" data-id="{{ u.id }}" onclick="showEdit({{ u.id }})">Edit</button>
+				<button class="btn btn-sm btn-warning" data-id="{{ u.id }}" onclick="toggleStatus({{ u.id }})">Toggle</button>
+				<button class="btn btn-sm btn-danger" data-id="{{ u.id }}" onclick="deleteUser({{ u.id }})">Delete</button>
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<script>
+$(function(){
+	$('#usersTable').DataTable();
+});
+
+function toggleStatus(id){
+	$.post(`/users/toggle-status/${id}`, {}, function(resp){
+		Swal.fire('Updated', 'Status changed', 'success').then(()=> location.reload());
+	}).fail(function(xhr){
+		Swal.fire('Error', xhr.responseJSON?.message || 'Failed', 'error');
+	});
+}
+
+function deleteUser(id){
+	Swal.fire({title:'Delete user?', icon:'warning', showCancelButton:true}).then((r)=>{
+		if(r.isConfirmed){
+			$.post(`/users/delete/${id}`, {}, function(){
+				Swal.fire('Deleted', '', 'success').then(()=> location.reload());
+			}).fail(function(){Swal.fire('Error','Failed','error')});
+		}
+	});
+}
+
+function showEdit(id){
+	// Placeholder - you can implement modal load via AJAX
+	Swal.fire('Edit user '+id, 'Implement modal form...', 'info');
+}
+</script>
+{% endblock %}

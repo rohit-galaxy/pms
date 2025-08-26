@@ -10,6 +10,10 @@ class Config:
     MYSQL_DB = "product_db"
     MYSQL_CURSORCLASS = "DictCursor"
 
+    # SQLAlchemy configuration (optional, used by extensions)
+    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:3306/{MYSQL_DB}?charset=utf8mb4"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     UPLOAD_FOLDER = os.path.join(BASE_DIR,"app", "static", "uploads")
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
 

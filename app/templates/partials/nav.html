@@ -10,8 +10,9 @@
 
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto fw-medium" style="font-family: 'Poppins', sans-serif;">
+        {% if session.get('user_id') %}
         <li class="nav-item">
-          <a class="nav-link px-3{% if request.path == '/' %} active fw-bold text-primary{% endif %}" href="/">Products</a>
+          <a class="nav-link px-3{% if request.path.startswith('/products') or request.path == '/' %} active fw-bold text-primary{% endif %}" href="/">Products</a>
         </li>
         <li class="nav-item">
           <a class="nav-link px-3{% if request.path.startswith('/categories') %} active fw-bold text-primary{% endif %}" href="/categories">Categories</a>
@@ -19,6 +20,19 @@
         <li class="nav-item">
           <a class="nav-link px-3{% if request.path.startswith('/brands') %} active fw-bold text-primary{% endif %}" href="/brands">Brands</a>
         </li>
+        {% if session.get('is_admin') %}
+        <li class="nav-item">
+          <a class="nav-link px-3{% if request.path.startswith('/users') %} active fw-bold text-primary{% endif %}" href="/users">Users</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link px-3" href="/auth/logout">Logout</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link px-3" href="/auth/login">Login</a>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>
