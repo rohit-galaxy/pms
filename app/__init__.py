@@ -1,17 +1,38 @@
-import sys
 import os
 import mysql.connector.pooling
-from flask import Flask
-
-# Fix sys.path for config import (keep this if needed)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from config import Config
+from flask import Flask, session, redirect, url_for, request, abort, flash
+from functools import wraps
 
 cnxpool = None
 
+def login_required(f):
+    """Decorator to ensure the user is logged in"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session or not session.get("is_authenticated"):
+            flash("Please log in to continue.", "warning")
+            return redirect(url_for("auth_bp.login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def role_required(role):
+    """Decorator to ensure the user has the required role"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if "user_id" not in session or not session.get("is_authenticated"):
+                return redirect(url_for("auth_bp.login"))
+            # Check admin role with is_admin boolean flag
+            if role == "admin" and not session.get("is_admin", False):
+                abort(403)
+            # Extend role checks here if needed for other roles
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    app.config.from_object("config.Config")
 
     global cnxpool
     cnxpool = mysql.connector.pooling.MySQLConnectionPool(
@@ -23,14 +44,34 @@ def create_app():
         database=app.config["MYSQL_DB"],
     )
 
-    # Register blueprints
+    # Blueprint imports
+    from app.controllers.auth_controller import auth_bp
+    from app.controllers.product_controller import product_bp
     from app.controllers.category_controller import category_bp
     from app.controllers.brand_controller import brand_bp
-    from app.controllers.product_controller import product_bp
+    from app.controllers.user_controller import user_bp
 
-    app.register_blueprint(category_bp)
-    app.register_blueprint(brand_bp)
-    app.register_blueprint(product_bp)
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(product_bp, url_prefix="/products")
+    app.register_blueprint(category_bp, url_prefix="/categories")
+    app.register_blueprint(brand_bp, url_prefix="/brands")
+    app.register_blueprint(user_bp, url_prefix="/users")
+
+    # Expose decorators for use in controllers
+    app.login_required = login_required
+    app.role_required = role_required
+
+    @app.route('/')
+    def index():
+        # Home redirects to login by default
+        return redirect(url_for('auth_bp.login'))
+
+    @app.before_request
+    def enforce_login():
+        # Skip auth routes and static files
+        if request.endpoint and not request.endpoint.startswith("auth_bp.") and not request.endpoint.startswith("static"):
+            if "user_id" not in session or not session.get("is_authenticated"):
+                return redirect(url_for("auth_bp.login"))
 
     return app
 

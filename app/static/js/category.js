@@ -2,18 +2,7 @@ $(function () {
   const modal = new bootstrap.Modal($("#categoryModal")[0]);
   const table = $("#categoryTable").DataTable();
 
-  function getExistingCategoryNames() {
-    const names = [];
-    $("#categoryTable tbody tr").each(function () {
-      let name = $(this).find("td.category-name").text().toLowerCase().trim();
-      if (name) {
-        names.push(name);
-      }
-    });
-    return names;
-  }
-
-  // Show modal for add / clear errors
+  // Show Add Category modal
   $("#btnAdd").click(function () {
     $("#modalTitle").text("Add Category");
     $("#categoryForm")[0].reset();
@@ -24,24 +13,11 @@ $(function () {
     $("#saveBtn").text("Save");
   });
 
-  // Realtime duplicate check
-  $("#categoryName").on("input", function () {
-    const val = $(this).val().toLowerCase().trim();
-    const existingNames = getExistingCategoryNames();
-    if (existingNames.includes(val)) {
-      $(this).addClass("error");
-      $("#nameError").removeClass("d-none");
-    } else {
-      $(this).removeClass("error");
-      $("#nameError").addClass("d-none");
-    }
-  });
-
-  // Edit - fill modal
+  // Edit Category modal
   $("#categoryTable").on("click", ".btn-edit", function () {
     let tr = $(this).closest("tr");
     let id = tr.data("id");
-    $.getJSON(`/category/get/${id}`, function (data) {
+    $.getJSON(`/categories/get/${id}`, function (data) {
       $("#modalTitle").text("Edit Category");
       $("#categoryName").val(data.name);
       $("#categoryModal").data("category-id", id);
@@ -52,121 +28,7 @@ $(function () {
     });
   });
 
-  // Submission (Add/Update)
-  $("#categoryForm").submit(function (e) {
-    e.preventDefault();
-    const nameInput = $("#categoryName");
-    const categoryName = nameInput.val().toLowerCase().trim();
-    const existingNames = getExistingCategoryNames();
-
-    $("#nameError").addClass("d-none");
-    nameInput.removeClass("error");
-
-    if (!categoryName) {
-      nameInput.addClass("error");
-      $("#nameError").text("Category name is required.").removeClass("d-none");
-      return;
-    }
-
-    let editingId = $("#categoryModal").data("category-id");
-    let duplicate = false;
-    if (editingId) {
-      let existingRow = $(`#categoryTable tbody tr[data-id='${editingId}']`);
-      let existingName = existingRow.find("td.category-name").text().toLowerCase().trim();
-      if (existingName !== categoryName && existingNames.includes(categoryName)) {
-        duplicate = true;
-      }
-    } else if (existingNames.includes(categoryName)) {
-      duplicate = true;
-    }
-
-    if (duplicate) {
-      nameInput.addClass("error");
-      $("#nameError").text("This category already exists.").removeClass("d-none");
-      return;
-    }
-
-    let url = editingId ? `/category/update/${editingId}` : "/category/create";
-    $.post(url, { name: $("#categoryName").val().trim() }, function (res) {
-      if (res.success) {
-        showToast(editingId ? "Category updated successfully" : "Category added successfully", "bg-success");
-        modal.hide();
-
-        if (editingId) {
-          // 🔵 In-place DataTable update (Edit)
-          let tr = $(`#categoryTable tbody tr[data-id='${editingId}']`);
-          let trow = table.row(tr);
-          let status = tr.find(".form-check-input").prop("checked") ? 1 : 0;
-          let actionsHtml = tr.find("td").last().html();
-          trow.data([
-            editingId,
-            categoryName,
-            `<div class="form-check form-switch">
-              <input type="checkbox" class="form-check-input status-toggle" id="toggle-${editingId}" data-id="${editingId}" ${status ? "checked" : ""}>
-              <label class="form-check-label" for="toggle-${editingId}"></label>
-            </div>`,
-            actionsHtml
-          ]).draw(false);
-        } else {
-          // 🔵 Add row dynamically without page reload (Add)
-          let newId = res.id || res.new_id; // Backend may return new_id or id
-          let actionsHtml = `
-            <button class="btn btn-sm btn-info btn-edit">Edit</button>
-            <button class="btn btn-sm btn-danger btn-delete">Delete</button>
-          `;
-          let newRow = [
-            newId,
-            categoryName,
-            `<div class="form-check form-switch">
-              <input type="checkbox" class="form-check-input status-toggle" id="toggle-${newId}" data-id="${newId}" checked>
-              <label class="form-check-label" for="toggle-${newId}"></label>
-            </div>`,
-            actionsHtml
-          ];
-          let rowNode = table.row.add(newRow).draw(false).node();
-          $(rowNode).attr("data-id", newId);
-          $(rowNode).find("td:eq(1)").addClass("category-name");
-          // Optionally, scroll table to new row:
-          table.row(rowNode).scrollTo();
-        }
-      } else {
-        showToast(res.message || "Error", "bg-danger");
-      }
-    }).fail(function () {
-      showToast("Server error occurred", "bg-danger");
-    });
-  });
-
-  // Status toggle
-  $("#categoryTable").on("change", ".status-toggle", function (e) {
-    e.preventDefault();
-    let checkbox = $(this);
-    let id = checkbox.data("id");
-    checkbox.prop("checked", !checkbox.is(":checked")); // revert until confirmed
-
-    Swal.fire({
-      title: "Are you sure?",
-      text: "Do you want to change the category status?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Yes, change it",
-      cancelButtonText: "Cancel",
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        $.post("/category/toggle-status/" + id, function (res) {
-          if (res.success) {
-            checkbox.prop("checked", res.status === "1");
-            showToast("Status changed to " + (res.status === "1" ? "Active" : "Inactive"), "bg-success");
-          } else {
-            showToast("Failed to change status", "bg-danger");
-          }
-        });
-      }
-    });
-  });
-
-  // Delete
+  // Delete Category with confirmation
   $("#categoryTable").on("click", ".btn-delete", function () {
     let tr = $(this).closest("tr");
     let id = tr.data("id");
@@ -180,7 +42,7 @@ $(function () {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        $.post("/category/delete/" + id, function (res) {
+        $.post(`/categories/delete/${id}`, function (res) {
           if (res.success) {
             table.row(tr).remove().draw(false);
             showToast(res.message || "Category deleted", "bg-success");
@@ -192,7 +54,134 @@ $(function () {
     });
   });
 
-  // Toast helper
+  // Toggle Category Status with confirmation
+  $("#categoryTable").on("change", ".status-toggle", function (e) {
+    e.preventDefault();
+    let checkbox = $(this);
+    let id = checkbox.data("id");
+
+    // Revert checkbox until confirmed
+    checkbox.prop("checked", !checkbox.is(":checked"));
+
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to change the category status?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, change it",
+      cancelButtonText: "Cancel",
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.post(`/categories/toggle-status/${id}`, function (res) {
+          if (res.success) {
+            checkbox.prop("checked", res.status === "1");
+            showToast("Status changed to " + (res.status === "1" ? "Active" : "Inactive"), "bg-success");
+          } else {
+            showToast("Failed to change status", "bg-danger");
+          }
+        });
+      }
+    });
+  });
+
+  // Form validation options
+  $("#categoryForm").validate({
+    rules: {
+      name: {
+        required: true,
+        regex: "^[A-Za-z0-9\\s\\-\\_\\.,'()%]{2,50}$",
+        uniqueCategoryName: true
+      }
+    },
+    messages: {
+      name: {
+        required: "Please enter category name",
+        regex: "Name must be 2–50 characters: letters, numbers, spaces, and - _ . , ' ( ) % only",
+        uniqueCategoryName: "This category already exists."
+      }
+    },
+    errorElement: "div",
+    errorClass: "error-message",
+    highlight: function (element) {
+      $(element).addClass("error");
+    },
+    unhighlight: function (element) {
+      $(element).removeClass("error");
+    },
+    errorPlacement: function (error, element) {
+      error.insertAfter(element);
+    },
+    submitHandler: function () {
+      let id = $("#categoryModal").data("category-id");
+      let url = id ? `/categories/update/${id}` : "/categories/create";
+      $.post(url, { name: $("#categoryName").val().trim() }, function (res) {
+        if (res.success) {
+          showToast(id ? "Category updated successfully" : "Category added successfully", "bg-success");
+          modal.hide();
+
+          let categoryName = $("#categoryName").val().trim();
+          let statusHtml = `<div class="form-check form-switch">
+              <input type="checkbox" class="form-check-input status-toggle" id="toggle-${res.id || id}" data-id="${res.id || id}" ${res.status === "1" || !id ? "checked" : ""}>
+              <label class="form-check-label" for="toggle-${res.id || id}"></label>
+            </div>`;
+          let actionsHtml = `
+            <button class="btn btn-sm btn-info btn-edit">Edit</button>
+            <button class="btn btn-sm btn-danger btn-delete">Delete</button>
+          `;
+          let rowData = [
+            res.id || id,
+            categoryName,
+            statusHtml,
+            actionsHtml
+          ];
+
+          if (id) {
+            let tr = $(`#categoryTable tbody tr[data-id='${id}']`);
+            table.row(tr).data(rowData).draw(false);
+          } else {
+            let rowNode = table.row.add(rowData).draw(false).node();
+            $(rowNode).attr("data-id", res.id);
+            $(rowNode).find("td:eq(1)").addClass("category-name");
+            table.row(rowNode).scrollTo();
+          }
+        } else {
+          $("#categoryName").addClass("error");
+          $("#nameError").text(res.message || "Error").removeClass("d-none");
+        }
+      }).fail(function () {
+        $("#categoryName").addClass("error");
+        $("#nameError").text("Server error occurred").removeClass("d-none");
+      });
+    }
+  });
+
+  // Adds regex method for validation
+  $.validator.addMethod("regex", function(value, element, pattern) {
+    return this.optional(element) || new RegExp(pattern).test(value);
+  });
+
+  // Unique category name check method
+  $.validator.addMethod("uniqueCategoryName", function(value) {
+    let isSuccess = false;
+    if (!value) return true;
+    let excludeId = $("#categoryModal").data("category-id") || null;
+    $.ajax({
+      url: "/categories/check-name",
+      type: "GET",
+      data: { name: value, exclude_id: excludeId },
+      async: false,
+      success: function(res) {
+        isSuccess = !res.exists;
+      },
+      error: function() {
+        isSuccess = true;
+      }
+    });
+    return isSuccess;
+  }, "This category already exists.");
+
+  // Toast helper function
   function showToast(message, className) {
     let toastHtml = `
       <div class="toast align-items-center text-white ${className} border-0 show position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
@@ -202,7 +191,7 @@ $(function () {
         </div>
       </div>`;
     let $toast = $(toastHtml);
-    $("body").append($toast);
+    $('body').append($toast);
     setTimeout(() => $toast.fadeOut(400, () => $toast.remove()), 3500);
   }
 });

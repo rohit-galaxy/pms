@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block title %}Category Management{% endblock %}
 
 {% block extra_css %}
@@ -10,6 +11,7 @@
   <h2 class="mb-0">Categories</h2>
   <button class="btn btn-primary" id="btnAdd">Add Category</button>
 </div>
+
 <table id="categoryTable" class="table table-striped">
   <thead>
     <tr>
@@ -26,13 +28,7 @@
       <td class="category-name">{{ c.name|lower|trim }}</td>
       <td>
         <div class="form-check form-switch">
-          <input
-            type="checkbox"
-            class="form-check-input status-toggle"
-            id="toggle-{{ c.id }}"
-            data-id="{{ c.id }}"
-            {% if c.status == '1' %}checked{% endif %}
-          />
+          <input type="checkbox" class="form-check-input status-toggle" id="toggle-{{ c.id }}" data-id="{{ c.id }}" {% if c.status == '1' %}checked{% endif %} />
           <label class="form-check-label" for="toggle-{{ c.id }}"></label>
         </div>
       </td>
@@ -57,17 +53,8 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="categoryName" class="form-label">Category Name<span class="required-asterisk">*</span></label>
-            <input
-              type="text"
-              class="form-control"
-              id="categoryName"
-              name="name"
-              required
-              autocomplete="off"
-            />
-            <div id="nameError" class="error-message d-none">
-              This category already exists.
-            </div>
+            <input type="text" class="form-control" id="categoryName" name="name" required autocomplete="off" />
+            <div id="nameError" class="error-message d-none">This category already exists.</div>
           </div>
         </div>
         <div class="modal-footer">

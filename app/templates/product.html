@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block title %}Product Management{% endblock %}
 
 {% block extra_css %}
@@ -40,9 +41,7 @@
       </td>
       <td>
         <div class="form-check form-switch">
-          <input type="checkbox" class="form-check-input status-toggle"
-                 id="toggle-{{ p.id }}" data-id="{{ p.id }}"
-                 {% if p.status == '1' %}checked{% endif %} />
+          <input type="checkbox" class="form-check-input status-toggle" id="toggle-{{ p.id }}" data-id="{{ p.id }}" {% if p.status == '1' %}checked{% endif %} />
           <label class="form-check-label" for="toggle-{{ p.id }}"></label>
         </div>
       </td>
@@ -69,6 +68,10 @@
           <div class="mb-3">
             <label for="name" class="form-label">Product Name<span class="required-asterisk">*</span></label>
             <input type="text" id="name" name="name" class="form-control" />
+          </div>
+          <div class="mb-3" id="productCodeContainer" style="display: none;">
+            <label for="product_code" class="form-label">Product Code</label>
+            <input type="text" id="product_code" name="product_code" class="form-control" readonly />
           </div>
           <div class="mb-3">
             <label for="category" class="form-label">Category<span class="required-asterisk">*</span></label>

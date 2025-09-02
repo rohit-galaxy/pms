@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block title %}Brand Management{% endblock %}
 
 {% block extra_css %}
@@ -10,6 +11,7 @@
   <h2 class="mb-0">Brands</h2>
   <button class="btn btn-primary" id="btnAdd">Add Brand</button>
 </div>
+
 <table id="brandTable" class="table table-striped">
   <thead>
     <tr>
@@ -28,7 +30,7 @@
       <td>{{ b.category_name }}</td>
       <td>
         <div class="form-check form-switch">
-          <input type="checkbox" class="form-check-input status-toggle" id="toggle-{{ b.id }}" data-id="{{ b.id }}" {% if b.status == '1' %}checked{% endif %}>
+          <input type="checkbox" class="form-check-input status-toggle" id="toggle-{{ b.id }}" data-id="{{ b.id }}" {% if b.status == '1' %}checked{% endif %} />
           <label class="form-check-label" for="toggle-{{ b.id }}"></label>
         </div>
       </td>
@@ -40,6 +42,7 @@
     {% endfor %}
   </tbody>
 </table>
+
 
 <!-- Modal -->
 <div class="modal fade" id="brandModal" tabindex="-1" aria-hidden="true">

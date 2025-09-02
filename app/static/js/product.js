@@ -2,10 +2,10 @@ $(function () {
   let modal = new bootstrap.Modal($("#productModal")[0]);
   let table = $("#productTable").DataTable();
 
-  // Select2
+  // Initialize Select2 on category and brand dropdowns
   $("#category, #brand").select2({ dropdownParent: $("#productModal"), width: "100%" });
 
-  // Dynamic brands when category changes
+  // Update brand options on category change
   $("#category").on("change", function () {
     let categoryId = $(this).val();
     if (!categoryId) {
@@ -13,7 +13,7 @@ $(function () {
       $(this).valid();
       return;
     }
-    $.getJSON("/brands/" + categoryId, function (data) {
+    $.getJSON(`/brands/brands/${categoryId}`, function (data) {
       let options = '<option value="">Select Brand</option>';
       $.each(data, function (i, brand) {
         options += `<option value="${brand.id}">${brand.name}</option>`;
@@ -25,34 +25,33 @@ $(function () {
 
   $("#brand").on("change", function () { $(this).valid(); });
 
-  // Add product modal
+  // Show Add product modal
   $("#btnAdd").click(function () {
     $("#modalTitle").text("Add Product");
     $("#productForm")[0].reset();
     $("#productId").val("");
     $("#brand").html('<option value="">Select Brand</option>').trigger("change");
     $("#product_code").val("");
-    $("#productCodeContainer").hide();  // Hide product code on add
+    $("#productCodeContainer").hide();
     $("#productForm").validate().resetForm();
     $("#productForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
     modal.show();
   });
 
-  // Edit product modal
+  // Show Edit product modal
   $("#productTable").on("click", ".btn-edit", function () {
     let tr = $(this).closest("tr");
     let id = tr.data("id");
 
-    $.getJSON(`/product/get/${id}`, function (data) {
+    $.getJSON(`/products/get/${id}`, function (data) {
       $("#modalTitle").text("Edit Product");
       $("#productId").val(data.id);
       $("#name").val(data.name);
       $("#product_code").val(data.product_code || "");
-      $("#productCodeContainer").show();  // Show product code on edit
+      $("#productCodeContainer").show();
       $("#category").val(data.category_id).trigger("change");
 
-      // Load brands for the selected category & set selected brand
-      $.getJSON("/brands/" + data.category_id, function (brands) {
+      $.getJSON(`/brands/brands/${data.category_id}`, function (brands) {
         let options = '<option value="">Select Brand</option>';
         $.each(brands, function (i, brand) {
           options += `<option value="${brand.id}">${brand.name}</option>`;
@@ -81,7 +80,7 @@ $(function () {
       reverseButtons: true,
     }).then((result) => {
       if (result.isConfirmed) {
-        $.post(`/product/delete/${id}`, function (res) {
+        $.post(`/products/delete/${id}`, function (res) {
           if (res.success) {
             table.row(tr).remove().draw(false);
             showToast(res.message || "Product deleted", "bg-success");
@@ -93,7 +92,7 @@ $(function () {
     });
   });
 
-  // Toggle status with SweetAlert2 confirmation
+  // Toggle status with confirmation
   $("#productTable").on("change", ".status-toggle", function () {
     let checkbox = $(this);
     let id = checkbox.data("id");
@@ -110,7 +109,7 @@ $(function () {
       reverseButtons: true,
     }).then((result) => {
       if (result.isConfirmed) {
-        $.post(`/product/toggle-status/${id}`, function (res) {
+        $.post(`/products/toggle-status/${id}`, function (res) {
           if (res.success) {
             checkbox.prop("checked", res.status === "1");
             showToast(
@@ -134,7 +133,7 @@ $(function () {
     });
   });
 
-  // Custom name format validation method
+  // Custom name regex validator
   $.validator.addMethod(
     "regex",
     function (value, element, pattern) {
@@ -144,29 +143,27 @@ $(function () {
     "Invalid format"
   );
 
-  // Custom validation method for unique product name
+  // Unique product name validator
   $.validator.addMethod("uniqueProductName", function(value, element) {
     var isSuccess = false;
-    if (!value) return true; // Skip empty
-
+    if (!value) return true;
     var excludeId = $("#productId").val() || null;
-
     $.ajax({
-      url: "/product/check-name",
+      url: "/products/check-name",
       type: "GET",
       data: { name: value, exclude_id: excludeId },
-      async: false,  // synchronous call required for jQuery Validate
+      async: false,
       success: function(res) {
         isSuccess = !res.exists;
       },
       error: function() {
-        isSuccess = true;  // On error, don’t block form submission
+        isSuccess = true;
       }
     });
     return isSuccess;
   }, "This product name already exists.");
 
-  // Product form validation & in-place insert/update
+  // Form validation and submission
   $("#productForm").validate({
     rules: {
       name: {
@@ -205,7 +202,7 @@ $(function () {
     },
     submitHandler: function (form) {
       let id = $("#productId").val();
-      let url = id ? `/product/update/${id}` : "/product/create";
+      let url = id ? `/products/update/${id}` : "/products/create";
       let formData = new FormData(form);
 
       $.ajax({
@@ -216,48 +213,42 @@ $(function () {
         processData: false,
         success: function (res) {
           if (res.success) {
-            // Hide modal and update/inject row in-place!
             modal.hide();
-
-            let product = res.product || res.new_product || res.data;
-            if (!product && !(res.id || res.new_id)) {
-              setTimeout(() => location.reload(), 800);
-              return;
-            }
-
-            let catName = $("#category option:selected").text();
-            let brandName = $("#brand option:selected").text();
-            let imgHtml = product && product.image_path
-              ? `<img src="/static/uploads/${product.image_path}" width="50" alt="Product Image" />`
-              : "-";
-            let statusHtml = `<div class="form-check form-switch">
-                <input type="checkbox" class="form-check-input status-toggle" id="toggle-${product.id}" data-id="${product.id}" ${product.status == "1" ? "checked" : ""}>
-                <label class="form-check-label" for="toggle-${product.id}"></label>
-              </div>`;
-            let actionsHtml = `
-              <button class="btn btn-sm btn-info btn-edit">Edit</button>
-              <button class="btn btn-sm btn-danger btn-delete">Delete</button>
-            `;
-            let rowData = [
-              product.id,
-              product.product_code || "-",
-              product.name,
-              catName,
-              brandName,
-              imgHtml,
-              statusHtml,
-              actionsHtml
-            ];
-
-            if (id) {
-              let tr = $(`#productTable tbody tr[data-id='${id}']`);
-              let trow = table.row(tr);
-              trow.data(rowData).draw(false);
-            } else {
-              let rowNode = table.row.add(rowData).draw(false).node();
-              $(rowNode).attr("data-id", product.id || res.id || res.new_id);
-            }
-            showToast(id ? "Product updated successfully" : "Product added successfully", "bg-success");
+            let productId = res.id || id;
+            $.getJSON(`/products/get/${productId}`, function (product) {
+              let catName = $("#category option:selected").text();
+              let brandName = $("#brand option:selected").text();
+              let imgHtml = product.image_path
+                ? `<img src="/static/uploads/${product.image_path}" width="50" alt="Product Image" />`
+                : "-";
+              let statusHtml = `<div class="form-check form-switch">
+                  <input type="checkbox" class="form-check-input status-toggle" id="toggle-${product.id}" data-id="${product.id}" ${product.status == "1" ? "checked" : ""}>
+                  <label class="form-check-label" for="toggle-${product.id}"></label>
+                </div>`;
+              let actionsHtml = `
+                <button class="btn btn-sm btn-info btn-edit">Edit</button>
+                <button class="btn btn-sm btn-danger btn-delete">Delete</button>
+              `;
+              let rowData = [
+                product.id,
+                product.product_code || "-",
+                product.name,
+                catName,
+                brandName,
+                imgHtml,
+                statusHtml,
+                actionsHtml
+              ];
+              if (id) {
+                let tr = $(`#productTable tbody tr[data-id='${id}']`);
+                let trow = table.row(tr);
+                trow.data(rowData).draw(false);
+              } else {
+                let rowNode = table.row.add(rowData).draw(false).node();
+                $(rowNode).attr("data-id", product.id);
+              }
+              showToast(id ? "Product updated successfully" : "Product added successfully", "bg-success");
+            });
           } else {
             showToast(res.message || "Operation failed", "bg-danger");
           }
@@ -269,7 +260,7 @@ $(function () {
     }
   });
 
-  // Toast helper
+  // Toast notification helper
   function showToast(message, className) {
     let toastHtml = `
       <div class="toast align-items-center text-white ${className} border-0 show position-fixed top-0 end-0 m-3" 

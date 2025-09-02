@@ -1,38 +1,28 @@
-$(function() {
+$(function () {
   let modal = new bootstrap.Modal($('#brandModal')[0]);
   let table = $('#brandTable').DataTable();
 
-  function getExistingBrands() {
-    const brands = [];
-    $("#brandTable tbody tr").each(function() {
-      let name = $(this).find("td.brand-name").text().toLowerCase().trim();
-      let cat = $(this).find("td.brand-name").data("category");
-      if (name && cat) {
-        brands.push({ name, cat });
-      }
-    });
-    return brands;
-  }
-
-  $('#btnAdd').click(function() {
+  // Add brand modal show/reset
+  $('#btnAdd').click(function () {
     $('#modalTitle').text('Add Brand');
     $('#brandForm')[0].reset();
     $('#brandName, #categorySelect').removeClass('error');
     $('#nameError, #categoryError').addClass('d-none');
     modal.show();
-    $('#brandModal').removeData('brand-id'); // clear editing id
+    $('#brandModal').removeData('brand-id');
     $('#saveBtn').text('Save');
   });
 
+  // Real-time validation on name/category inputs
   $('#brandName, #categorySelect').on('input change', function () {
     validateBrandForm(false);
   });
 
+  // Validate Brand Form
   function validateBrandForm(showErrors = true) {
     let valid = true;
     let name = $('#brandName').val().toLowerCase().trim();
     let categoryId = $('#categorySelect').val();
-    let existing = getExistingBrands();
 
     $('#brandName, #categorySelect').removeClass('error');
     $('#nameError, #categoryError').addClass('d-none');
@@ -51,92 +41,108 @@ $(function() {
       }
       valid = false;
     }
-    let editingId = $('#brandModal').data('brand-id');
-    if (existing.some(b => b.name === name && String(b.cat) === categoryId)) {
-      // Allow keeping same name if editing itself
-      if (showErrors) {
-        if (!editingId) {
-          $('#brandName').addClass('error');
-          $('#nameError').text("This brand already exists in the selected category.").removeClass('d-none');
-        } else {
-          let currentRow = $("#brandTable tbody tr[data-id='" + editingId + "']");
-          if (!currentRow.length || currentRow.find("td.brand-name").text().toLowerCase().trim() !== name || currentRow.find("td.brand-name").data("category") != categoryId) {
-            $('#brandName').addClass('error');
-            $('#nameError').text("This brand already exists in the selected category.").removeClass('d-none');
+    if (name && categoryId) {
+      let editingId = $('#brandModal').data('brand-id');
+      $.ajax({
+        url: '/brands/check-name',
+        type: 'GET',
+        data: { name: name, category_id: categoryId, exclude_id: editingId || null },
+        async: false,
+        success: function (res) {
+          if (res.exists) {
+            if (showErrors) {
+              $('#brandName').addClass('error');
+              $('#nameError').text("This brand already exists in the selected category.").removeClass('d-none');
+            }
             valid = false;
           }
+        },
+        error: function () {
+          valid = true; // ignore error in validation to not block form
         }
-      }
+      });
     }
     return valid;
   }
 
-  $('#brandForm').submit(function(e) {
+  // Form submission for create/update
+  $('#brandForm').submit(function (e) {
     e.preventDefault();
     if (!validateBrandForm(true)) return;
 
     let name = $('#brandName').val().trim();
     let category_id = $('#categorySelect').val();
     let editingId = $('#brandModal').data('brand-id');
-    let url = editingId ? `/brand/update/${editingId}` : '/brand/create';
+    let url = editingId ? `/brands/update/${editingId}` : '/brands/create';
 
-    $.post(url, { name: name, category_id: category_id }, function(res) {
-      if(res.success) {
+    $.post(url, { name: name, category_id: category_id }, function (res) {
+      if (res.success) {
         showToast(editingId ? 'Brand updated successfully' : 'Brand added successfully', 'bg-success');
         modal.hide();
 
+        let categoryName = $('#categorySelect option:selected').text();
+        let statusHtml = `
+          <div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input status-toggle" id="toggle-${res.id || editingId}" data-id="${res.id || editingId}" ${res.status === "1" || !editingId ? "checked" : ""}>
+            <label class="form-check-label" for="toggle-${res.id || editingId}"></label>
+          </div>`;
+        let actionsHtml = `
+          <button class="btn btn-sm btn-info btn-edit">Edit</button>
+          <button class="btn btn-sm btn-danger btn-delete">Delete</button>`;
+
+        let rowData = [
+          res.id || editingId,
+          name.toLowerCase(),
+          categoryName,
+          statusHtml,
+          actionsHtml
+        ];
         if (editingId) {
-          // Update existing row data without reloading, preserving current page
-          let row = table.row($("tr[data-id='" + editingId + "']"));
-          row.data([
-            editingId,
-            name.toLowerCase().trim(),
-            $('#categorySelect option:selected').text(),
-            $(`tr[data-id='${editingId}'] td`).eq(3).html(),
-            $(`tr[data-id='${editingId}'] td`).eq(4).html()
-          ]).draw(false);
+          let row = table.row($(`tr[data-id='${editingId}']`));
+          row.data(rowData).draw(false);
         } else {
-          // New brand added - reload to show with latest data
-          setTimeout(() => location.reload(), 800);
+          let rowNode = table.row.add(rowData).draw(false).node();
+          $(rowNode).attr("data-id", res.id);
+          $(rowNode).find("td:eq(1)").addClass("brand-name").attr("data-category", category_id);
         }
       } else {
         $('#brandName').addClass('error');
         $('#nameError').text(res.message || 'Error').removeClass('d-none');
       }
-    }).fail(function(xhr) {
-      let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error';
+    }).fail(function (xhr) {
+      let msg = 'Error';
+      if (xhr.responseJSON && xhr.responseJSON.message) {
+        msg = xhr.responseJSON.message;
+      }
       $('#brandName').addClass('error');
       $('#nameError').text(msg).removeClass('d-none');
     });
   });
 
-  // 🔹 Edit button
-  $('#brandTable').on('click', '.btn-edit', function() {
+  // Edit button click handler
+  $('#brandTable').on('click', '.btn-edit', function () {
     let tr = $(this).closest('tr');
     let id = tr.data('id');
-    $.getJSON(`/brand/get/${id}`, function(data) {
+    $.getJSON(`/brands/get/${id}`, function (data) {
       $('#modalTitle').text('Edit Brand');
       $('#brandName').val(data.name);
       $('#categorySelect').val(data.category_id).trigger('change');
       $('#brandModal').data('brand-id', id);
       $('#nameError').addClass('d-none');
       $('#brandName').removeClass('error');
-      $('#categorySelect').removeClass('error');
       $('#categoryError').addClass('d-none');
+      $('#categorySelect').removeClass('error');
       $('#saveBtn').text('Update');
       modal.show();
     });
   });
 
-  // 🔹 Status toggle with SweetAlert2
-  $('#brandTable').on('change', '.status-toggle', function(e) {
+  // Status toggle handler with confirmation
+  $('#brandTable').on('change', '.status-toggle', function (e) {
     e.preventDefault();
     let checkbox = $(this);
     let id = checkbox.data('id');
-
-    // Revert UI back until confirmed
     checkbox.prop('checked', !checkbox.is(':checked'));
-
     Swal.fire({
       title: 'Are you sure?',
       text: 'Do you want to change the brand status?',
@@ -147,8 +153,8 @@ $(function() {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        $.post(`/brand/toggle-status/${id}`, function(res) {
-          if(res.success) {
+        $.post(`/brands/toggle-status/${id}`, function (res) {
+          if (res.success) {
             checkbox.prop('checked', res.status === '1');
             showToast('Status changed to ' + (res.status === '1' ? 'Active' : 'Inactive'), 'bg-success');
           } else {
@@ -159,11 +165,10 @@ $(function() {
     });
   });
 
-  // 🔹 Delete button with SweetAlert2
-  $('#brandTable').on('click', '.btn-delete', function() {
+  // Delete brand handler with confirmation
+  $('#brandTable').on('click', '.btn-delete', function () {
     let tr = $(this).closest('tr');
     let id = tr.data('id');
-
     Swal.fire({
       title: 'Are you sure?',
       text: "This brand will be permanently deleted!",
@@ -174,8 +179,8 @@ $(function() {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        $.post(`/brand/delete/${id}`, function(res) {
-          if(res.success) {
+        $.post(`/brands/delete/${id}`, function (res) {
+          if (res.success) {
             table.row(tr).remove().draw(false);
             showToast(res.message || 'Brand deleted', 'bg-success');
           } else {
@@ -186,7 +191,7 @@ $(function() {
     });
   });
 
-  // Toast helper
+  // Toast notification helper
   function showToast(message, className) {
     let toastHtml = `
       <div class="toast align-items-center text-white ${className} border-0 show position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
