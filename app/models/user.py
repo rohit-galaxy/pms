@@ -117,12 +117,12 @@ def check_email_exists(email, exclude_id=None):
 # ------------------ Update user password ------------------
 def update_user_password(user_id, old_password, new_password, admin_override=False):
     """
-    Plain-text password update.
-    - admin_override=True skips old password check.
-    - Otherwise validates old password.
+    Updates a user's password.
+    - Normal users: must provide correct old password.
+    - Admin override: skips old password check.
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT password FROM users WHERE id=%s", (user_id,))
     row = cursor.fetchone()
 
@@ -131,10 +131,15 @@ def update_user_password(user_id, old_password, new_password, admin_override=Fal
         conn.close()
         return False, "User not found."
 
-    stored_password = row[0].strip() if row[0] else ''
+    stored_password = row["password"].strip() if row["password"] else ""
+    print("DEBUG user_id:", user_id)
+    print("DEBUG stored:", repr(stored_password))
+    print("DEBUG input:", repr(old_password.strip() if old_password else None))
+    print("DEBUG admin_override:", admin_override)
 
+    # Require old password only if NOT admin override
     if not admin_override:
-        if stored_password != old_password.strip():
+        if not old_password or stored_password != old_password.strip():
             cursor.close()
             conn.close()
             return False, "Old password is incorrect."

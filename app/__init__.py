@@ -1,6 +1,6 @@
 import os
 import mysql.connector.pooling
-from flask import Flask, session, redirect, url_for, request, abort, flash
+from flask import Flask, session, redirect, url_for, request, flash
 from functools import wraps
 
 cnxpool = None
@@ -21,11 +21,14 @@ def role_required(role):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if "user_id" not in session or not session.get("is_authenticated"):
+                flash("Please log in to continue.", "warning")
                 return redirect(url_for("auth_bp.login"))
+
             # Check admin role with is_admin boolean flag
             if role == "admin" and not session.get("is_admin", False):
-                abort(403)
-            # Extend role checks here if needed for other roles
+                flash("You are not authorized to access this page.", "danger")
+                return redirect(url_for("product_bp.index"))  # send normal users to their dashboard
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -68,10 +71,12 @@ def create_app():
 
     @app.before_request
     def enforce_login():
-        # Skip auth routes and static files
-        if request.endpoint and not request.endpoint.startswith("auth_bp.") and not request.endpoint.startswith("static"):
-            if "user_id" not in session or not session.get("is_authenticated"):
-                return redirect(url_for("auth_bp.login"))
+        """Force login except for auth routes and static files"""
+        if request.endpoint:
+            if request.endpoint.startswith("auth_bp.") or request.endpoint.startswith("static"):
+                return  # allow
+        if "user_id" not in session or not session.get("is_authenticated"):
+            return redirect(url_for("auth_bp.login"))
 
     return app
 

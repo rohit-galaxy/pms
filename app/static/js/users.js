@@ -6,7 +6,8 @@ $(function () {
   });
 
   // Initialize Select2
-  $("#role").select2({ dropdownParent: $("#userModal"), width: "100%" });
+  $("#is_admin").select2({ dropdownParent: $("#userModal"), width: "100%" });
+
 
   // ------------------ Add User Modal ------------------
   $("#btnAdd").click(function () {
@@ -27,7 +28,8 @@ $(function () {
       $("#modalTitle").text("Edit User");
       $("#userId").val(data.id);
       $("#email").val(data.email);
-      $("#role").val(data.role).trigger("change");
+      $("#is_admin").val(data.is_admin ? "1" : "0").trigger("change");
+
       $("#password, #confirm_password").val("").prop("required", false);
       $("#passwordAsterisk, #confirmPasswordAsterisk").hide();
       modal.show();
@@ -140,7 +142,7 @@ $(function () {
         },
         equalTo: "#password",
       },
-      role: { required: true },
+      is_admin: { required: true },
     },
     messages: {
       email: { required: "Please enter an email", email: "Invalid email" },
@@ -152,7 +154,7 @@ $(function () {
         required: "Please confirm the password",
         equalTo: "Passwords do not match",
       },
-      role: { required: "Please select a role" },
+      is_admin: { required: "Please select a role" },
     },
     errorElement: "div",
     errorClass: "error text-danger mt-1",
@@ -176,14 +178,14 @@ $(function () {
     let url = id ? `/users/update/${id}` : "/users/create";
     let formData = {
       email: $("#email").val(),
-      role: $("#role").val(),
+      is_admin: $("#is_admin").val(),
     };
     if ($("#password").val()) formData.password = $("#password").val();
 
     $.post(url, formData, function (res) {
       if (res.success) {
         modal.hide();
-        let roleText = $("#role option:selected").text();
+        let roleText = $("#is_admin option:selected").text();
         let statusHtml = `
           <div class="form-check form-switch">
             <input type="checkbox" class="form-check-input status-toggle"
@@ -214,7 +216,7 @@ $(function () {
   // ------------------ Reset Form ------------------
   function resetForm() {
     $("#userForm")[0].reset();
-    $("#role").val("").trigger("change");
+    $("#is_admin").val("").trigger("change");
     $("#userForm").validate().resetForm();
     $("#userForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
   }
@@ -264,7 +266,8 @@ $(function () {
         checkOldPassword: true
       },
       new_password: { required: true, minlength: 6 },
-      confirm_new_password: { required: true, equalTo: "#new_password" }
+      confirm_password: { required: true, equalTo: "#new_password" }
+
     },
     messages: {
       old_password: { required: "Please enter your old password" },
@@ -272,10 +275,11 @@ $(function () {
         required: "Please enter a new password",
         minlength: "Password must be at least 6 characters"
       },
-      confirm_new_password: {
-        required: "Please confirm the new password",
-        equalTo: "Passwords do not match"
-      }
+     confirm_password: {
+  required: "Please confirm the new password",
+  equalTo: "Passwords do not match"
+}
+
     },
     errorElement: "div",
     errorClass: "text-danger mt-1",
@@ -284,10 +288,7 @@ $(function () {
     errorPlacement: function (error, element) { error.insertAfter(element); },
     submitHandler: function (form) {
       // Only submit if new password matches confirm password
-      if ($("#new_password").val() !== $("#confirm_new_password").val()) {
-        showToast("Passwords do not match", "bg-danger");
-        return false;
-      }
+      
       form.submit();
     }
   });
