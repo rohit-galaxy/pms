@@ -161,18 +161,29 @@ def toggle_brand_status(brand_id):
 def soft_delete_brand(brand_id):
     user_id = session.get('user_id')
     is_admin = session.get('is_admin', False)
-
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Soft delete the brand
     query = "UPDATE product_brand SET status='2' WHERE id=%s"
     params = (brand_id,)
     if not is_admin:
         query += " AND user_id = %s"
         params += (user_id,)
     cursor.execute(query, params)
+
+    # Soft delete all products under this brand
+    prod_query = "UPDATE product SET status='2' WHERE brand_id=%s"
+    prod_params = (brand_id,)
+    if not is_admin:
+        prod_query += " AND user_id = %s"
+        prod_params += (user_id,)
+    cursor.execute(prod_query, prod_params)
+
     conn.commit()
     cursor.close()
     conn.close()
+    return True
 
 
 def check_brand_name_exists(name, category_id, exclude_id=None):

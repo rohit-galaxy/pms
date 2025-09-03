@@ -99,3 +99,15 @@ def change_password():
         return jsonify({"success": False, "message": message}), 400
 
     return jsonify({"success": True, "message": message})
+
+@user_bp.route("/update-password", methods=["POST"])
+def update_password():
+    user_id = request.form.get("user_id")
+    old_password = request.form.get("old_password", "")
+    new_password = request.form.get("new_password")
+
+    # Admin can override
+    admin_override = session.get("is_admin", False) and str(session.get("user_id")) != str(user_id)
+
+    success, message = update_user_password(user_id, old_password, new_password, admin_override)
+    return jsonify({"success": success, "message": message})

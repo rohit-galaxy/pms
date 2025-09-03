@@ -1,6 +1,8 @@
 $(function () {
   let modal = new bootstrap.Modal($('#brandModal')[0]);
-  let table = $('#brandTable').DataTable();
+  let table = $('#brandTable').DataTable({
+    order :[[0, "desc"]]
+  });
 
   // Add brand modal show/reset
   $('#btnAdd').click(function () {

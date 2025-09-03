@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app.models.user import authenticate_user, fetch_user_by_email, update_user_password
 
+
 auth_bp = Blueprint('auth_bp', __name__)
+
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -32,11 +34,13 @@ def login():
 
     return render_template("login.html")
 
+
 @auth_bp.route("/logout")
 def logout():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for('auth_bp.login'))
+
 
 @auth_bp.route("/check-email", methods=["GET"])
 def check_email():
@@ -47,6 +51,7 @@ def check_email():
     user = fetch_user_by_email(email)
     exists = user is not None and (not exclude_id or user['id'] != exclude_id)
     return jsonify({"exists": exists})
+
 
 @auth_bp.route("/change-password", methods=["POST"])
 def change_password():
@@ -66,3 +71,23 @@ def change_password():
     success, message = update_user_password(user_id, old_password, new_password)
     flash(message, "success" if success else "danger")
     return redirect(url_for("user_bp.index"))
+
+
+@auth_bp.route("/validate-old-password", methods=["POST"])
+def validate_old_password():
+    if not session.get("is_authenticated"):
+        return jsonify({"valid": False}), 401
+
+    old_password = request.form.get("old_password", "")
+    user_id = session.get("user_id")
+    user = fetch_user_by_email_by_id(user_id)
+    if user and user['password'].strip() == old_password.strip():
+        return jsonify({"valid": True})
+    return jsonify({"valid": False})
+
+
+
+# Helper function to fetch user by id (if not already existing in models)
+def fetch_user_by_email_by_id(user_id):
+    from app.models.user import fetch_user_by_id
+    return fetch_user_by_id(user_id)

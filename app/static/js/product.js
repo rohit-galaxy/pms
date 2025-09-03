@@ -1,6 +1,10 @@
 $(function () {
   let modal = new bootstrap.Modal($("#productModal")[0]);
-  let table = $("#productTable").DataTable();
+
+  let table = $("#productTable").DataTable({
+    order: [[0, "desc"]], // Order by ID column descending so newest appear first
+    // You can add other DataTable options here as required
+  });
 
   // Initialize Select2 on category and brand dropdowns
   $("#category, #brand").select2({ dropdownParent: $("#productModal"), width: "100%" });

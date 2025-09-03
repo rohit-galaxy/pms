@@ -1,14 +1,19 @@
 from app import get_connection
 
+# ------------------ Fetch all users ------------------
 def fetch_all_users():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, email, is_admin, status, created_at, updated_at FROM users WHERE status != '2' ORDER BY created_at DESC")
+    cursor.execute(
+        "SELECT id, email, is_admin, status, created_at, updated_at "
+        "FROM users WHERE status != '2' ORDER BY created_at DESC"
+    )
     users = cursor.fetchall()
     cursor.close()
     conn.close()
     return users
 
+# ------------------ Fetch single user ------------------
 def fetch_user_by_id(user_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -27,6 +32,7 @@ def fetch_user_by_email(email):
     conn.close()
     return user
 
+# ------------------ Create user ------------------
 def create_user(email, password, is_admin):
     conn = get_connection()
     cursor = conn.cursor()
@@ -40,6 +46,7 @@ def create_user(email, password, is_admin):
     conn.close()
     return new_id
 
+# ------------------ Update user ------------------
 def update_user(user_id, email, password=None, is_admin=None):
     conn = get_connection()
     cursor = conn.cursor()
@@ -58,6 +65,7 @@ def update_user(user_id, email, password=None, is_admin=None):
     conn.close()
     return True
 
+# ------------------ Toggle user status ------------------
 def toggle_user_status(user_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -74,6 +82,7 @@ def toggle_user_status(user_id):
     conn.close()
     return new_status
 
+# ------------------ Soft delete user ------------------
 def soft_delete_user(user_id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -82,17 +91,22 @@ def soft_delete_user(user_id):
     cursor.close()
     conn.close()
 
+# ------------------ Authenticate user ------------------
 def authenticate_user(email, password):
     user = fetch_user_by_email(email)
     if user and user['password'].strip() == password.strip():
         return user
     return None
 
+# ------------------ Check email uniqueness ------------------
 def check_email_exists(email, exclude_id=None):
     conn = get_connection()
     cursor = conn.cursor()
     if exclude_id:
-        cursor.execute("SELECT id FROM users WHERE email = %s AND id != %s", (email.strip(), exclude_id))
+        cursor.execute(
+            "SELECT id FROM users WHERE email = %s AND id != %s",
+            (email.strip(), exclude_id)
+        )
     else:
         cursor.execute("SELECT id FROM users WHERE email = %s", (email.strip(),))
     exists = cursor.fetchone() is not None
@@ -100,11 +114,12 @@ def check_email_exists(email, exclude_id=None):
     conn.close()
     return exists
 
+# ------------------ Update user password ------------------
 def update_user_password(user_id, old_password, new_password, admin_override=False):
     """
-    Update a user's password.
-    - If admin_override=True → skip old password check.
-    - Otherwise → verify old password before updating.
+    Plain-text password update.
+    - admin_override=True skips old password check.
+    - Otherwise validates old password.
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -116,7 +131,7 @@ def update_user_password(user_id, old_password, new_password, admin_override=Fal
         conn.close()
         return False, "User not found."
 
-    stored_password = row[0].strip() if row[0] is not None else ''
+    stored_password = row[0].strip() if row[0] else ''
 
     if not admin_override:
         if stored_password != old_password.strip():

@@ -122,18 +122,41 @@ def toggle_category_status(category_id):
 def soft_delete_category(category_id):
     user_id = session.get('user_id')
     is_admin = session.get('is_admin', False)
-
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Soft delete the category
     query = "UPDATE product_category SET status='2' WHERE id=%s"
     params = (category_id,)
     if not is_admin:
         query += " AND user_id = %s"
         params += (user_id,)
     cursor.execute(query, params)
+
+    # Find all brands in this category
+    brand_query = "SELECT id FROM product_brand WHERE category_id=%s AND status != '2'"
+    brand_params = (category_id,)
+    if not is_admin:
+        brand_query += " AND user_id = %s"
+        brand_params += (user_id,)
+    cursor.execute(brand_query, brand_params)
+    brand_ids = [row[0] for row in cursor.fetchall()]
+
+    # Soft delete those brands
+    if brand_ids:
+        brand_placeholders = ','.join(['%s'] * len(brand_ids))
+        brand_update_query = f"UPDATE product_brand SET status='2' WHERE id IN ({brand_placeholders})"
+        cursor.execute(brand_update_query, brand_ids)
+
+        # For all these brands, soft delete all their products
+        prod_update_query = f"UPDATE product SET status='2' WHERE brand_id IN ({brand_placeholders})"
+        cursor.execute(prod_update_query, brand_ids)
+
     conn.commit()
     cursor.close()
     conn.close()
+    return True
+
 
 def check_category_name_exists(name, exclude_id=None):
     user_id = session.get('user_id')

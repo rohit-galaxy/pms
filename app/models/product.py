@@ -167,23 +167,25 @@ def toggle_product_status(product_id):
     conn.close()
     return new_status
 
-
 def soft_delete_product(product_id):
     user_id = session.get('user_id')
     is_admin = session.get('is_admin', False)
 
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Only soft delete the product. Do NOT delete category or brand.
     query = "UPDATE product SET status='2' WHERE id=%s"
     params = (product_id,)
     if not is_admin:
         query += " AND user_id = %s"
         params += (user_id,)
     cursor.execute(query, params)
+
     conn.commit()
     cursor.close()
     conn.close()
-
+    return True
 
 def allowed_file(filename, app):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config["ALLOWED_IMAGE_EXTENSIONS"]
@@ -208,3 +210,4 @@ def check_product_name_exists(name, exclude_id=None):
     cursor.close()
     conn.close()
     return product is not None
+

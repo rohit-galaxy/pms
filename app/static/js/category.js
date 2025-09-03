@@ -1,6 +1,8 @@
 $(function () {
   const modal = new bootstrap.Modal($("#categoryModal")[0]);
-  const table = $("#categoryTable").DataTable();
+  const table = $("#categoryTable").DataTable({
+    order: [[0,"desc"]]
+  });
 
   // Show Add Category modal
   $("#btnAdd").click(function () {
