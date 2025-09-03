@@ -5,7 +5,7 @@ def fetch_all_users():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id, email, is_admin, status, created_at, updated_at "
+        "SELECT id, first_name, last_name, email, is_admin, status, created_at, updated_at "
         "FROM users WHERE status != '2' ORDER BY created_at DESC"
     )
     users = cursor.fetchall()
@@ -33,12 +33,12 @@ def fetch_user_by_email(email):
     return user
 
 # ------------------ Create user ------------------
-def create_user(email, password, is_admin):
+def create_user(first_name, last_name, email, password, is_admin):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO users (email, password, is_admin, status) VALUES (%s, %s, %s, '1')",
-        (email.strip(), password.strip(), is_admin)
+        "INSERT INTO users (first_name, last_name, email, password, is_admin, status) VALUES (%s, %s, %s, %s, %s, '1')",
+        (first_name, last_name, email.strip(), password.strip(), is_admin)
     )
     conn.commit()
     new_id = cursor.lastrowid
@@ -47,18 +47,18 @@ def create_user(email, password, is_admin):
     return new_id
 
 # ------------------ Update user ------------------
-def update_user(user_id, email, password=None, is_admin=None):
+def update_user(user_id, first_name, last_name, email, password=None, is_admin=None):
     conn = get_connection()
     cursor = conn.cursor()
     if password:
         cursor.execute(
-            "UPDATE users SET email=%s, password=%s, is_admin=%s WHERE id=%s",
-            (email.strip(), password.strip(), is_admin, user_id)
+            "UPDATE users SET first_name=%s, last_name=%s, email=%s, password=%s, is_admin=%s WHERE id=%s",
+            (first_name, last_name, email.strip(), password.strip(), is_admin, user_id)
         )
     else:
         cursor.execute(
-            "UPDATE users SET email=%s, is_admin=%s WHERE id=%s",
-            (email.strip(), is_admin, user_id)
+            "UPDATE users SET first_name=%s, last_name=%s, email=%s, is_admin=%s WHERE id=%s",
+            (first_name, last_name, email.strip(), is_admin, user_id)
         )
     conn.commit()
     cursor.close()
@@ -132,10 +132,10 @@ def update_user_password(user_id, old_password, new_password, admin_override=Fal
         return False, "User not found."
 
     stored_password = row["password"].strip() if row["password"] else ""
-    print("DEBUG user_id:", user_id)
-    print("DEBUG stored:", repr(stored_password))
-    print("DEBUG input:", repr(old_password.strip() if old_password else None))
-    print("DEBUG admin_override:", admin_override)
+    # print("DEBUG user_id:", user_id)
+    # print("DEBUG stored:", repr(stored_password))
+    # print("DEBUG input:", repr(old_password.strip() if old_password else None))
+    # print("DEBUG admin_override:", admin_override)
 
     # Require old password only if NOT admin override
     if not admin_override:

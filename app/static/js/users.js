@@ -1,13 +1,11 @@
 $(function () {
   const modal = new bootstrap.Modal($("#userModal")[0]);
-  const cpModal = new bootstrap.Modal($("#changePasswordModal")[0]);
   const table = $("#userTable").DataTable({
     order: [[0, "desc"]],
   });
 
   // Initialize Select2
   $("#is_admin").select2({ dropdownParent: $("#userModal"), width: "100%" });
-
 
   // ------------------ Add User Modal ------------------
   $("#btnAdd").click(function () {
@@ -27,9 +25,10 @@ $(function () {
       resetForm();
       $("#modalTitle").text("Edit User");
       $("#userId").val(data.id);
+      $("#first_name").val(data.first_name);
+      $("#last_name").val(data.last_name);
       $("#email").val(data.email);
       $("#is_admin").val(data.is_admin ? "1" : "0").trigger("change");
-
       $("#password, #confirm_password").val("").prop("required", false);
       $("#passwordAsterisk, #confirmPasswordAsterisk").hide();
       modal.show();
@@ -129,6 +128,8 @@ $(function () {
   // ------------------ User Form Validation ------------------
   $("#userForm").validate({
     rules: {
+      first_name: { required: true },
+      last_name: { required: true },
       email: { required: true, email: true, uniqueEmail: true },
       password: {
         required: function () {
@@ -145,6 +146,8 @@ $(function () {
       is_admin: { required: true },
     },
     messages: {
+      first_name: { required: "Please enter the first name" },
+      last_name: { required: "Please enter the last name" },
       email: { required: "Please enter an email", email: "Invalid email" },
       password: {
         required: "Please enter a password",
@@ -177,6 +180,8 @@ $(function () {
     let id = $("#userId").val();
     let url = id ? `/users/update/${id}` : "/users/create";
     let formData = {
+      first_name: $("#first_name").val(),
+      last_name: $("#last_name").val(),
       email: $("#email").val(),
       is_admin: $("#is_admin").val(),
     };
@@ -195,9 +200,16 @@ $(function () {
           </div>`;
         let actionsHtml = `
           <button class="btn btn-sm btn-info btn-edit">Edit</button>
-          <button class="btn btn-sm btn-danger btn-delete">Delete</button>
-          <button class="btn btn-sm btn-warning btn-change-password" data-id="${res.id || id}">Change Password</button>`;
-        let rowData = [res.id || id, formData.email, roleText, statusHtml, actionsHtml];
+          <button class="btn btn-sm btn-danger btn-delete">Delete</button>`;
+        let rowData = [
+          res.id || id,
+          formData.first_name,
+          formData.last_name,
+          formData.email,
+          roleText,
+          statusHtml,
+          actionsHtml
+        ];
 
         if (id) {
           let tr = $(`#userTable tbody tr[data-id='${id}']`);
@@ -220,78 +232,6 @@ $(function () {
     $("#userForm").validate().resetForm();
     $("#userForm").find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
   }
-
-  // ------------------ Change Password Modal ------------------
-  $(document).on("click", ".btn-change-password", function () {
-    let userId = $(this).data("id");
-    $("#cp_userId").val(userId);
-    if (userId == "{{ session.get('user_id') }}") {
-      $("#oldPasswordField").show();
-    } else {
-      $("#oldPasswordField").hide();
-    }
-    $("#changePasswordForm")[0].reset();
-    $("#changePasswordForm").validate().resetForm();
-    $("#changePasswordForm").find(".is-invalid, .is-valid").removeClass("is-invalid is-valid");
-    cpModal.show();
-  });
-
-  // ------------------ Custom Old Password Validation ------------------
-  $.validator.addMethod("checkOldPassword", function (value, element) {
-    if ($("#oldPasswordField").is(":hidden")) return true;
-
-    let isValid = false;
-    if (!value) return false;
-
-    $.ajax({
-      url: "/auth/validate-old-password",
-      type: "POST",
-      data: { old_password: value },
-      async: false,
-      success: function (res) {
-        isValid = res.valid === true;
-      },
-      error: function () {
-        isValid = false;
-      }
-    });
-    return isValid;
-  }, "Old password is incorrect.");
-
-  // ------------------ Change Password Form Validation ------------------
-  $("#changePasswordForm").validate({
-    rules: {
-      old_password: {
-        required: function () { return $("#oldPasswordField").is(":visible"); },
-        checkOldPassword: true
-      },
-      new_password: { required: true, minlength: 6 },
-      confirm_password: { required: true, equalTo: "#new_password" }
-
-    },
-    messages: {
-      old_password: { required: "Please enter your old password" },
-      new_password: {
-        required: "Please enter a new password",
-        minlength: "Password must be at least 6 characters"
-      },
-     confirm_password: {
-  required: "Please confirm the new password",
-  equalTo: "Passwords do not match"
-}
-
-    },
-    errorElement: "div",
-    errorClass: "text-danger mt-1",
-    highlight: function (el) { $(el).addClass("is-invalid").removeClass("is-valid"); },
-    unhighlight: function (el) { $(el).removeClass("is-invalid").addClass("is-valid"); },
-    errorPlacement: function (error, element) { error.insertAfter(element); },
-    submitHandler: function (form) {
-      // Only submit if new password matches confirm password
-      
-      form.submit();
-    }
-  });
 
   // ------------------ Toast Helper ------------------
   function showToast(message, className) {

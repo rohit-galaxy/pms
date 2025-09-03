@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
-from app.models.user import authenticate_user, fetch_user_by_email, update_user_password, fetch_user_by_id
-
+from app.models.user import authenticate_user, fetch_user_by_email,fetch_user_by_id
 auth_bp = Blueprint('auth_bp', __name__)
 
 # -------------------- Login --------------------
@@ -33,14 +32,12 @@ def login():
 
     return render_template("login.html")
 
-
 # -------------------- Logout --------------------
 @auth_bp.route("/logout")
 def logout():
     session.clear()
-    flash("You have been logged out.", "info")
+    flash("You have been logged out.", "success")
     return redirect(url_for('auth_bp.login'))
-
 
 # -------------------- Check Email --------------------
 @auth_bp.route("/check-email", methods=["GET"])
@@ -54,7 +51,6 @@ def check_email():
     user = fetch_user_by_email(email)
     exists = user is not None and (not exclude_id or user['id'] != exclude_id)
     return jsonify({"exists": exists})
-
 @auth_bp.route("/validate-old-password", methods=["POST"])
 def validate_old_password():
     if not session.get("is_authenticated"):
@@ -68,41 +64,12 @@ def validate_old_password():
         return jsonify({"valid": False})
 
     stored_password = user["password"]
-    is_valid = (old_password == stored_password)  # since you’re not hashing yet
-
+    is_valid = (old_password == stored_password)
     return jsonify({"valid": is_valid})
 
-
-# -------------------- Change Password --------------------
-@auth_bp.route("/change-password", methods=["POST"])
-def change_password():
-    if not session.get("is_authenticated"):
-        flash("Unauthorized action.", "danger")
-        return redirect(url_for("auth_bp.login"))
-
-    user_id = session.get("user_id")
-    old_password = request.form.get("old_password", "").strip()
-    new_password = request.form.get("new_password", "").strip()
-    confirm_password = request.form.get("confirm_password", "").strip()
-
-    user = fetch_user_by_id(user_id)
-    if not user:
-        flash("User not found.", "danger")
-        return redirect(url_for("auth_bp.login"))
-
-    # validate old password (only if changing own password)
-    if str(user["id"]) == str(user_id) and old_password != user["password"]:
-        flash("Old password is incorrect.", "danger")
-        return redirect(url_for("user_bp.users"))
-
-    if new_password != confirm_password:
-        flash("New passwords do not match.", "danger")
-        return redirect(url_for("user_bp.users"))
-
-    success = update_user_password(user_id, new_password)
-    if success:
-        flash("Password updated successfully.", "success")
-    else:
-        flash("Password update failed.", "danger")
-
-    return redirect(url_for("user_bp.users"))
+@auth_bp.route("/validate-login", methods=["POST"])
+def validate_login():
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "").strip()
+    user = authenticate_user(email, password)
+    return jsonify({"valid": user is not None})

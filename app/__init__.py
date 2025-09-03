@@ -39,7 +39,7 @@ def create_app():
 
     global cnxpool
     cnxpool = mysql.connector.pooling.MySQLConnectionPool(
-        pool_name="mypool",
+        pool_name="xyz",
         pool_size=5,
         host=app.config["MYSQL_HOST"],
         user=app.config["MYSQL_USER"],

@@ -47,7 +47,8 @@ def update(id):
     success = update_brand(id, name, category_id)
     if not success:
         return jsonify({"success": False, "message": "Brand not found or unauthorized."}), 404
-    return jsonify({"success": True, "message": "Brand updated successfully."})
+    brand = fetch_brand_by_id(id)
+    return jsonify({"success": True, "status": brand['status'], "id": id, "message": "Brand updated successfully."})
 
 @brand_bp.route("/toggle-status/<int:id>", methods=["POST"])
 def toggle_status(id):

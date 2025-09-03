@@ -1,5 +1,5 @@
 $(document).ready(function () {
-  $("form").validate({
+  var validator = $("#loginForm").validate({
     rules: {
       email: {
         required: true,
@@ -7,6 +7,22 @@ $(document).ready(function () {
       },
       password: {
         required: true,
+        remote: {
+          url: "/auth/validate-login",
+          type: "POST",
+          data: {
+            email: function () {
+              return $("#email").val();
+            },
+            password: function () {
+              return $("#password").val();
+            }
+          },
+          dataFilter: function(response) {
+            var res = JSON.parse(response);
+            return res.valid ? "true" : "\"Invalid email or password.\"";
+          }
+        }
       },
     },
     messages: {
@@ -16,6 +32,7 @@ $(document).ready(function () {
       },
       password: {
         required: "Please enter your password.",
+        remote: "Invalid password.",
       },
     },
     errorElement: "div",

@@ -57,15 +57,14 @@
             class="dropdown-menu dropdown-menu-end"
             aria-labelledby="profileDropdown"
           >
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                data-bs-toggle="modal"
-                data-bs-target="#changePasswordModal"
-                >Change Password</a
-              >
-            </li>
+           <li>
+  <a
+    class="dropdown-item"
+    href="{{ url_for('user_bp.change_password_page') }}"
+    >Change Password</a
+  >
+</li>
+
             <li>
               <a class="dropdown-item" href="{{ url_for('auth_bp.logout') }}"
                 >Logout</a
