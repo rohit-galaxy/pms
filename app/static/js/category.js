@@ -1,7 +1,7 @@
 $(function () {
   const modal = new bootstrap.Modal($("#categoryModal")[0]);
   const table = $("#categoryTable").DataTable({
-    order: [[0,"desc"]]
+    order: [[0, "desc"]]
   });
 
   // Show Add Category modal
@@ -10,6 +10,8 @@ $(function () {
     $("#categoryForm")[0].reset();
     $("#nameError").addClass("d-none");
     $("#categoryName").removeClass("error");
+    $("#category_code").val("");
+    $("#categoryCodeContainer").hide();
     modal.show();
     $("#categoryModal").removeData("category-id");
     $("#saveBtn").text("Save");
@@ -25,6 +27,8 @@ $(function () {
       $("#categoryModal").data("category-id", id);
       $("#nameError").addClass("d-none");
       $("#categoryName").removeClass("error");
+      $("#category_code").val(data.category_code || "");
+      $("#categoryCodeContainer").show();
       modal.show();
       $("#saveBtn").text("Update");
     });
@@ -61,10 +65,7 @@ $(function () {
     e.preventDefault();
     let checkbox = $(this);
     let id = checkbox.data("id");
-
-    // Revert checkbox until confirmed
     checkbox.prop("checked", !checkbox.is(":checked"));
-
     Swal.fire({
       title: "Are you sure?",
       text: "Do you want to change the category status?",
@@ -121,8 +122,8 @@ $(function () {
         if (res.success) {
           showToast(id ? "Category updated successfully" : "Category added successfully", "bg-success");
           modal.hide();
-
           let categoryName = $("#categoryName").val().trim();
+          let categoryCode = res.category_code || $("#category_code").val() || "-";
           let statusHtml = `<div class="form-check form-switch">
               <input type="checkbox" class="form-check-input status-toggle" id="toggle-${res.id || id}" data-id="${res.id || id}" ${res.status === "1" || !id ? "checked" : ""}>
               <label class="form-check-label" for="toggle-${res.id || id}"></label>
@@ -133,18 +134,18 @@ $(function () {
           `;
           let rowData = [
             res.id || id,
+            categoryCode,
             categoryName,
             statusHtml,
             actionsHtml
           ];
-
           if (id) {
             let tr = $(`#categoryTable tbody tr[data-id='${id}']`);
             table.row(tr).data(rowData).draw(false);
           } else {
             let rowNode = table.row.add(rowData).draw(false).node();
             $(rowNode).attr("data-id", res.id);
-            $(rowNode).find("td:eq(1)").addClass("category-name");
+            $(rowNode).find("td:eq(2)").addClass("category-name");
             table.row(rowNode).scrollTo();
           }
         } else {

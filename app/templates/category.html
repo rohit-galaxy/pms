@@ -16,6 +16,7 @@
   <thead>
     <tr>
       <th>ID</th>
+      <th>Category Code</th> <!-- NEW -->
       <th>Name</th>
       <th>Status</th>
       <th>Actions</th>
@@ -25,6 +26,7 @@
     {% for c in categories %}
     <tr data-id="{{ c.id }}">
       <td>{{ c.id }}</td>
+      <td>{{ c.category_code or '-' }}</td>
       <td class="category-name">{{ c.name|lower|trim }}</td>
       <td>
         <div class="form-check form-switch">
@@ -51,6 +53,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
+          <div class="mb-3" id="categoryCodeContainer" style="display: none;">
+            <label for="category_code" class="form-label">Category Code</label>
+            <input type="text" class="form-control" id="category_code" name="category_code" readonly />
+          </div>
           <div class="mb-3">
             <label for="categoryName" class="form-label">Category Name<span class="required-asterisk">*</span></label>
             <input type="text" class="form-control" id="categoryName" name="name" required autocomplete="off" />

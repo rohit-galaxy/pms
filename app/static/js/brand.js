@@ -1,7 +1,7 @@
 $(function () {
   let modal = new bootstrap.Modal($('#brandModal')[0]);
   let table = $('#brandTable').DataTable({
-    order :[[0, "desc"]]
+    order: [[0, "desc"]]
   });
 
   // Add brand modal show/reset
@@ -10,6 +10,8 @@ $(function () {
     $('#brandForm')[0].reset();
     $('#brandName, #categorySelect').removeClass('error');
     $('#nameError, #categoryError').addClass('d-none');
+    $('#brand_code').val("");
+    $('#brandCodeContainer').hide();
     modal.show();
     $('#brandModal').removeData('brand-id');
     $('#saveBtn').text('Save');
@@ -20,15 +22,12 @@ $(function () {
     validateBrandForm(false);
   });
 
-  // Validate Brand Form
   function validateBrandForm(showErrors = true) {
     let valid = true;
     let name = $('#brandName').val().toLowerCase().trim();
     let categoryId = $('#categorySelect').val();
-
     $('#brandName, #categorySelect').removeClass('error');
     $('#nameError, #categoryError').addClass('d-none');
-
     if (!name) {
       if (showErrors) {
         $('#brandName').addClass('error');
@@ -60,7 +59,7 @@ $(function () {
           }
         },
         error: function () {
-          valid = true; // ignore error in validation to not block form
+          valid = true;
         }
       });
     }
@@ -82,6 +81,7 @@ $(function () {
         showToast(editingId ? 'Brand updated successfully' : 'Brand added successfully', 'bg-success');
         modal.hide();
 
+        let brandCode = res.brand_code || $("#brand_code").val() || "-";
         let categoryName = $('#categorySelect option:selected').text();
         let statusHtml = `
           <div class="form-check form-switch">
@@ -94,6 +94,7 @@ $(function () {
 
         let rowData = [
           res.id || editingId,
+          brandCode,
           name.toLowerCase(),
           categoryName,
           statusHtml,
@@ -105,7 +106,7 @@ $(function () {
         } else {
           let rowNode = table.row.add(rowData).draw(false).node();
           $(rowNode).attr("data-id", res.id);
-          $(rowNode).find("td:eq(1)").addClass("brand-name").attr("data-category", category_id);
+          $(rowNode).find("td:eq(2)").addClass("brand-name").attr("data-category", category_id);
         }
       } else {
         $('#brandName').addClass('error');
@@ -129,6 +130,8 @@ $(function () {
       $('#modalTitle').text('Edit Brand');
       $('#brandName').val(data.name);
       $('#categorySelect').val(data.category_id).trigger('change');
+      $('#brand_code').val(data.brand_code || "");
+      $('#brandCodeContainer').show();
       $('#brandModal').data('brand-id', id);
       $('#nameError').addClass('d-none');
       $('#brandName').removeClass('error');
@@ -193,7 +196,6 @@ $(function () {
     });
   });
 
-  // Toast notification helper
   function showToast(message, className) {
     let toastHtml = `
       <div class="toast align-items-center text-white ${className} border-0 show position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">

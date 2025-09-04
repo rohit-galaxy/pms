@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify
 from app.models.brand import (
     fetch_all_brands, fetch_brand_by_id, create_brand, update_brand,
     toggle_brand_status, soft_delete_brand, fetch_brands_by_category,
@@ -33,7 +33,14 @@ def create():
     new_id = create_brand(name, category_id)
     if new_id is None:
         return jsonify({"success": False, "message": "This brand already exists in the selected category."}), 409
-    return jsonify({"success": True, "id": new_id, "message": "Brand created successfully."})
+    brand = fetch_brand_by_id(new_id)
+    return jsonify({
+        "success": True,
+        "id": new_id,
+        "brand_code": brand["brand_code"],
+        "status": brand["status"],
+        "message": "Brand created successfully."
+    })
 
 @brand_bp.route("/update/<int:id>", methods=["POST"])
 def update(id):
@@ -48,7 +55,13 @@ def update(id):
     if not success:
         return jsonify({"success": False, "message": "Brand not found or unauthorized."}), 404
     brand = fetch_brand_by_id(id)
-    return jsonify({"success": True, "status": brand['status'], "id": id, "message": "Brand updated successfully."})
+    return jsonify({
+        "success": True,
+        "status": brand['status'],
+        "id": id,
+        "brand_code": brand["brand_code"],  # now available for UI if needed
+        "message": "Brand updated successfully."
+    })
 
 @brand_bp.route("/toggle-status/<int:id>", methods=["POST"])
 def toggle_status(id):

@@ -16,6 +16,7 @@
   <thead>
     <tr>
       <th>ID</th>
+      <th>Brand Code</th> <!-- NEW -->
       <th>Name</th>
       <th>Category</th>
       <th>Status</th>
@@ -26,6 +27,7 @@
     {% for b in brands %}
     <tr data-id="{{ b.id }}">
       <td>{{ b.id }}</td>
+      <td>{{ b.brand_code or '-' }}</td>
       <td class="brand-name" data-category="{{ b.category_id }}">{{ b.name|lower|trim }}</td>
       <td>{{ b.category_name }}</td>
       <td>
@@ -43,7 +45,6 @@
   </tbody>
 </table>
 
-
 <!-- Modal -->
 <div class="modal fade" id="brandModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
@@ -54,6 +55,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
+          <div class="mb-3" id="brandCodeContainer" style="display:none;">
+            <label for="brand_code" class="form-label">Brand Code</label>
+            <input type="text" class="form-control" id="brand_code" name="brand_code" readonly />
+          </div>
           <div class="mb-3">
             <label for="brandName" class="form-label">Brand Name<span class="required-asterisk">*</span></label>
             <input type="text" class="form-control" id="brandName" name="name" required autocomplete="off" />

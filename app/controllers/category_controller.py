@@ -26,10 +26,13 @@ def create():
     if check_category_name_exists(name):
         return jsonify({"success": False, "message": "Category already exists."}), 409
     new_id = create_category(name)
+    # Fetch the newly created category to get its code and status for display
+    category = fetch_category_by_id(new_id)
     return jsonify({
         "success": True,
         "id": new_id,
-        "status": "1",
+        "category_code": category["category_code"],
+        "status": category["status"],
         "message": "Category created successfully."
     })
 
@@ -43,7 +46,14 @@ def update(id):
     success = update_category(id, name)
     if not success:
         return jsonify({"success": False, "message": "Category not found"}), 404
-    return jsonify({"success": True, "message": "Category updated successfully."})
+    category = fetch_category_by_id(id)
+    return jsonify({
+        "success": True,
+        "status": category['status'],
+        "id": id,
+        "category_code": category["category_code"],  # just like brand_code
+        "message": "Category updated successfully."
+    })
 
 @category_bp.route("/toggle-status/<int:id>", methods=["POST"])
 def toggle_status(id):

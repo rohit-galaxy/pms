@@ -4,7 +4,7 @@ import random
 from werkzeug.utils import secure_filename
 from app import get_connection
 from flask import session
-
+from app.models.user import fetch_user_by_id  # Make sure this is importable
 
 def fetch_all_products():
     user_id = session.get('user_id')
@@ -31,7 +31,6 @@ def fetch_all_products():
     conn.close()
     return products
 
-
 def fetch_product_by_id(product_id):
     user_id = session.get('user_id')
     is_admin = session.get('is_admin', False)
@@ -49,22 +48,26 @@ def fetch_product_by_id(product_id):
     conn.close()
     return product
 
-
-def generate_unique_product_code():
+def generate_user_product_code(user_id):
+    """
+    Generate a code: first_name + 3 random digits, unique in product_code column.
+    """
+    user = fetch_user_by_id(user_id)
+    base = user["first_name"].capitalize() if user and user.get("first_name") else "USR"
     conn = get_connection()
     cursor = conn.cursor()
     while True:
-        random_number = random.randint(10000, 99999)
-        code = f"RDS{random_number}"
+        digits = random.randint(100, 999)
+        code = f"{base}{digits}"
         cursor.execute("SELECT 1 FROM product WHERE product_code = %s", (code,))
         if not cursor.fetchone():
             cursor.close()
             conn.close()
             return code
 
-
 def create_product(name, category_id, brand_id, product_code, file, app):
     user_id = session.get('user_id')
+    is_admin = session.get('is_admin', False)
     filename = None
     if file and file.filename and allowed_file(file.filename, app):
         filename = secure_filename(str(uuid.uuid4()) + "_" + file.filename)
@@ -72,8 +75,12 @@ def create_product(name, category_id, brand_id, product_code, file, app):
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         file.save(save_path)
 
+    # The backend always ensures code is generated and unique
     if not product_code:
-        product_code = generate_unique_product_code()
+        if is_admin:
+            product_code = "superadmin"
+        else:
+            product_code = generate_user_product_code(user_id)
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -87,7 +94,6 @@ def create_product(name, category_id, brand_id, product_code, file, app):
     cursor.close()
     conn.close()
     return new_id
-
 
 def update_product(product_id, name, category_id, brand_id, file, app):
     user_id = session.get('user_id')
@@ -136,7 +142,6 @@ def update_product(product_id, name, category_id, brand_id, file, app):
     conn.close()
     return True
 
-
 def toggle_product_status(product_id):
     user_id = session.get('user_id')
     is_admin = session.get('is_admin', False)
@@ -174,7 +179,6 @@ def soft_delete_product(product_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Only soft delete the product. Do NOT delete category or brand.
     query = "UPDATE product SET status='2' WHERE id=%s"
     params = (product_id,)
     if not is_admin:
@@ -189,7 +193,6 @@ def soft_delete_product(product_id):
 
 def allowed_file(filename, app):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config["ALLOWED_IMAGE_EXTENSIONS"]
-
 
 def check_product_name_exists(name, exclude_id=None):
     user_id = session.get('user_id')
@@ -210,4 +213,3 @@ def check_product_name_exists(name, exclude_id=None):
     cursor.close()
     conn.close()
     return product is not None
-

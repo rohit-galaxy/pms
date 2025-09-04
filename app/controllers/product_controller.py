@@ -25,7 +25,7 @@ def get_product(id):
 @product_bp.route("/create", methods=["POST"])
 def create():
     name = request.form.get("name")
-    product_code = request.form.get("product_code")
+    # product_code is NOT read from the form; will be created server-side
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
@@ -33,7 +33,8 @@ def create():
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
 
-    new_id = create_product(name, category_id, brand_id, product_code, file, current_app)
+    # product_code generation is handled internally
+    new_id = create_product(name, category_id, brand_id, None, file, current_app)
     return jsonify({"success": True, "id": new_id, "message": "Product created successfully."})
 
 @product_bp.route("/update/<int:id>", methods=["POST"])
@@ -67,10 +68,8 @@ def delete(id):
 def check_product_name():
     name = request.args.get("name", "").strip()
     exclude_id = request.args.get("exclude_id", default=None, type=int)
-
     if not name:
         return jsonify({"exists": False})
-
     exists = check_product_name_exists(name, exclude_id)
     return jsonify({"exists": exists})
 
