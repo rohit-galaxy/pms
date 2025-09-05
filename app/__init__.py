@@ -1,6 +1,6 @@
 import os
 import mysql.connector.pooling
-from flask import Flask, session, redirect, url_for, request, flash
+from flask import Flask, session, redirect, url_for, request, flash, g
 from functools import wraps
 
 cnxpool = None
@@ -77,6 +77,18 @@ def create_app():
                 return  # allow
         if "user_id" not in session or not session.get("is_authenticated"):
             return redirect(url_for("auth_bp.login"))
+    
+    @app.context_processor
+    def inject_user():
+        user_first_name = ""
+        if "user_id" in session:
+            # Fetch user once and cache in flask.g for performance if needed
+            if not hasattr(g, "user"):
+                from app.models.user import fetch_user_by_id
+                g.user = fetch_user_by_id(session["user_id"])
+            user_first_name = g.user.get("first_name", "") if g.user else ""
+        return dict(user_first_name=user_first_name)
+
 
     return app
 

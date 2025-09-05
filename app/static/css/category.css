@@ -23,3 +23,13 @@
   font-weight: bold;
   margin-left: 4px;
 }
+#categoryTable thead {
+  background-color: #0F4C75 !important;
+}
+
+#categoryTable thead th {
+  background-color: #0F4C75 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  text-transform: uppercase;
+}

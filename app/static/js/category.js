@@ -10,7 +10,6 @@ $(function () {
     $("#categoryForm")[0].reset();
     $("#nameError").addClass("d-none");
     $("#categoryName").removeClass("error");
-    $("#category_code").val("");
     $("#categoryCodeContainer").hide();
     modal.show();
     $("#categoryModal").removeData("category-id");
@@ -27,8 +26,7 @@ $(function () {
       $("#categoryModal").data("category-id", id);
       $("#nameError").addClass("d-none");
       $("#categoryName").removeClass("error");
-      $("#category_code").val(data.category_code || "");
-      $("#categoryCodeContainer").show();
+      $("#categoryCodeContainer").hide(); // Hide category code container always
       modal.show();
       $("#saveBtn").text("Update");
     });
@@ -55,6 +53,8 @@ $(function () {
           } else {
             showToast("Delete failed", "bg-danger");
           }
+        }).fail(() => {
+          showToast("Server error occurred", "bg-danger");
         });
       }
     });
@@ -122,8 +122,8 @@ $(function () {
         if (res.success) {
           showToast(id ? "Category updated successfully" : "Category added successfully", "bg-success");
           modal.hide();
-          let categoryName = $("#categoryName").val().trim();
-          let categoryCode = res.category_code || $("#category_code").val() || "-";
+          let name = res.name;
+          let created_by = res.created_by || "-";
           let statusHtml = `<div class="form-check form-switch">
               <input type="checkbox" class="form-check-input status-toggle" id="toggle-${res.id || id}" data-id="${res.id || id}" ${res.status === "1" || !id ? "checked" : ""}>
               <label class="form-check-label" for="toggle-${res.id || id}"></label>
@@ -134,8 +134,8 @@ $(function () {
           `;
           let rowData = [
             res.id || id,
-            categoryCode,
-            categoryName,
+            created_by,
+            name,
             statusHtml,
             actionsHtml
           ];
@@ -152,19 +152,17 @@ $(function () {
           $("#categoryName").addClass("error");
           $("#nameError").text(res.message || "Error").removeClass("d-none");
         }
-      }).fail(function () {
+      }).fail(() => {
         $("#categoryName").addClass("error");
         $("#nameError").text("Server error occurred").removeClass("d-none");
       });
     }
   });
 
-  // Adds regex method for validation
   $.validator.addMethod("regex", function(value, element, pattern) {
     return this.optional(element) || new RegExp(pattern).test(value);
   });
 
-  // Unique category name check method
   $.validator.addMethod("uniqueCategoryName", function(value) {
     let isSuccess = false;
     if (!value) return true;

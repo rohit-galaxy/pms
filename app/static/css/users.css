@@ -20,7 +20,22 @@
   font-weight: bold;
   margin-left: 4px;
 }
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
 .select2-selection.select2-error {
   border-color: #dc3545 !important;
   box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25);
+}
+#userTable thead {
+  background-color: #0F4C75 !important;
+}
+
+#userTable thead th {
+  background-color: #0F4C75 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  text-transform: uppercase;
 }

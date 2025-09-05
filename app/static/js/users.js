@@ -160,19 +160,34 @@ $(function () {
       is_admin: { required: "Please select a role" },
     },
     errorElement: "div",
-    errorClass: "error text-danger mt-1",
-    highlight: function (el) {
-      $(el).addClass("is-invalid").removeClass("is-valid");
-    },
-    unhighlight: function (el) {
-      $(el).removeClass("is-invalid").addClass("is-valid");
-    },
-    errorPlacement: function (error, el) {
+  errorClass: "error text-danger mt-1",
+  highlight: function(el) {
+    $(el).addClass("is-invalid").removeClass("is-valid");
+    // Highlight Select2 box for dropdown
+    if ($(el).hasClass("form-select")) {
+      setTimeout(function() {
+        $(el).next(".select2-container").find(".select2-selection").addClass("select2-error");
+      }, 1);
+    }
+  },
+  unhighlight: function(el) {
+    $(el).removeClass("is-invalid").addClass("is-valid");
+    if ($(el).hasClass("form-select")) {
+      $(el).next(".select2-container").find(".select2-selection").removeClass("select2-error");
+    }
+  },
+  // THIS IS THE IMPORTANT PART:
+  errorPlacement: function(error, el) {
+    // If element is Select2, place error after visible select2:
+    if (el.hasClass('form-select')) {
+      error.insertAfter(el.next('.select2-container'));
+    } else {
       error.insertAfter(el);
-    },
-    submitHandler: function () {
-      saveUser();
-    },
+    }
+  },
+  submitHandler: function() {
+    saveUser();
+  }
   });
 
   // ------------------ Save User ------------------

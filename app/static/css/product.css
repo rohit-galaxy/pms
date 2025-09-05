@@ -21,3 +21,44 @@
   margin-top: 0.25rem;
   display: block;
 }
+/* Product Page Specific */
+#productTable img {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+#productModal .modal-content {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  color: #fff;
+}
+
+#productModal label {
+  font-weight: 600;
+  color: #ffd369;
+}
+
+#productModal input, 
+#productModal select {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+}
+
+#productModal input:focus, 
+#productModal select:focus {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 2px #ffd369;
+}
+#productTable thead {
+  background-color: #0F4C75 !important;
+}
+
+#productTable thead th {
+  background-color: #0F4C75 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  text-transform: uppercase;
+}

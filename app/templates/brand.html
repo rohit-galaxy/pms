@@ -8,15 +8,15 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">Brands</h2>
+  <h2 class="mb-0">Brand Management</h2>
   <button class="btn btn-primary" id="btnAdd">Add Brand</button>
 </div>
 
-<table id="brandTable" class="table table-striped">
-  <thead>
+  <table id="brandTable" class="table table-striped table-hover table-bordered align-middle rounded-3 overflow-hidden shadow">
+  <thead >
     <tr>
       <th>ID</th>
-      <th>Brand Code</th> <!-- NEW -->
+      <th>Brand Code</th>
       <th>Name</th>
       <th>Category</th>
       <th>Status</th>
@@ -32,7 +32,7 @@
       <td>{{ b.category_name }}</td>
       <td>
         <div class="form-check form-switch">
-          <input type="checkbox" class="form-check-input status-toggle" id="toggle-{{ b.id }}" data-id="{{ b.id }}" {% if b.status == '1' %}checked{% endif %} />
+          <input class="form-check-input status-toggle" type="checkbox" id="toggle-{{ b.id }}" data-id="{{ b.id }}" {% if b.status == '1' %}checked{% endif %} />
           <label class="form-check-label" for="toggle-{{ b.id }}"></label>
         </div>
       </td>
@@ -45,7 +45,9 @@
   </tbody>
 </table>
 
-<!-- Modal -->
+
+
+<!-- Brand Modal -->
 <div class="modal fade" id="brandModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <form id="brandForm" novalidate>
@@ -60,24 +62,24 @@
             <input type="text" class="form-control" id="brand_code" name="brand_code" readonly />
           </div>
           <div class="mb-3">
-            <label for="brandName" class="form-label">Brand Name<span class="required-asterisk">*</span></label>
+            <label for="brandName" class="form-label">Brand Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="brandName" name="name" required autocomplete="off" />
-            <div id="nameError" class="error-message d-none"></div>
+            <div id="nameError" class="error-message"></div>
           </div>
           <div class="mb-3">
-            <label for="categorySelect" class="form-label">Category<span class="required-asterisk">*</span></label>
+            <label for="categorySelect" class="form-label">Category <span class="text-danger">*</span></label>
             <select class="form-select" id="categorySelect" name="category_id" required>
               <option value="">Select Category</option>
               {% for c in categories %}
               <option value="{{ c.id }}">{{ c.name }}</option>
               {% endfor %}
             </select>
-            <div id="categoryError" class="error-message d-none">Please select a category.</div>
+            <div id="categoryError" class="error-message">Please select a category.</div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+          <button id="saveBtn" class="btn btn-primary" type="submit">Save</button>
         </div>
       </div>
     </form>

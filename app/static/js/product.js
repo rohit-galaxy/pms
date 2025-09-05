@@ -1,5 +1,14 @@
 $(function () {
-  // Safe modal init once DOM is ready
+  // Reset form
+  function resetForm() {
+    $('#productForm')[0].reset();
+    $('#productForm').validate().resetForm();
+    $('#productForm').find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+    $('#name, #category, #brand').removeClass('error');
+    $('#category, #brand').val(null).trigger('change');
+    $('#productId, #product_code, #image').val('');
+  }
+
   const modalEl = document.getElementById('productModal');
   if (!modalEl) {
     console.error('Product modal element not found!');
@@ -10,27 +19,19 @@ $(function () {
   // Initialize DataTable
   const table = $('#productTable').DataTable({
     order: [[0, 'desc']],
-    columnDefs: [
-      {
-        targets: 0,
-        searchable: false,
-        orderable: false,
-        render: function (data, type, row, meta) {
-          if (window.IS_ADMIN) {
-            return data; // show database id for admin
-          } else {
-            return meta.row + 1; // show serial number for users
-          }
-        }
+    columnDefs: [{
+      targets: 0,
+      searchable: false,
+      orderable: false,
+      render: function (data, type, row, meta) {
+        return window.IS_ADMIN ? data : meta.row + 1;
       }
-    ]
+    }]
   });
 
-  // Update serial numbering on draw for users
   if (!window.IS_ADMIN) {
     table.on('order.dt search.dt page.dt', function () {
-      table.column(0, { search: 'applied', order: 'applied', page: 'current' })
-        .nodes()
+      table.column(0, { search: 'applied', order: 'applied', page: 'current' }).nodes()
         .each(function (cell, i) {
           cell.innerHTML = i + 1;
         });
@@ -43,7 +44,7 @@ $(function () {
     width: '100%'
   });
 
-  // Update brands when category changes
+  // Dynamic brand loading
   $('#category').on('change', function () {
     const catId = $(this).val();
     if (!catId) {
@@ -61,25 +62,19 @@ $(function () {
     });
   });
 
-  // Validate brand selection on change
   $('#brand').on('change', function () {
     $(this).valid();
   });
 
-  // Show Add Product Modal
+  // Add Product Modal
   $('#btnAdd').click(function () {
     resetForm();
     $('#modalTitle').text('Add Product');
-    $('#productId').val('');
-    $('#product_code').val('');
-    $('#category, #brand').val('').trigger('change');
     $('#product_code').parent().hide();
-    $('#productForm').validate().resetForm();
-    $('#productForm').find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
     modal.show();
   });
 
-  // Show Edit Product Modal
+  // Edit Product Modal
   $('#productTable').on('click', '.btn-edit', function () {
     const tr = $(this).closest('tr');
     const id = tr.data('id');
@@ -87,11 +82,10 @@ $(function () {
       resetForm();
       $('#modalTitle').text('Edit Product');
       $('#productId').val(data.id);
-      $('#product_code').val(data.product_code || '');
-      $('#product_code').parent().show();
+      $('#product_code').val(data.product_code || '').prop('readonly', true).parent().show();
       $('#name').val(data.name);
-      // load brands after setting category
       $('#category').val(data.category_id).trigger('change');
+
       $.getJSON(`/brands/brands/${data.category_id}`, function (brands) {
         let options = '<option value="">Select Brand</option>';
         $.each(brands, function (i, brand) {
@@ -105,7 +99,7 @@ $(function () {
     });
   });
 
-  // Delete product
+  // Delete Product
   $('#productTable').on('click', '.btn-delete', function () {
     const tr = $(this).closest('tr');
     const id = tr.data('id');
@@ -134,12 +128,13 @@ $(function () {
     });
   });
 
-  // Toggle status
+  // Toggle Status
   $('#productTable').on('change', '.status-toggle', function () {
     const checkbox = $(this);
     const id = checkbox.data('id');
     const originalState = checkbox.prop('checked');
     checkbox.prop('disabled', true);
+
     Swal.fire({
       title: 'Are you sure?',
       text: 'Do you want to change the product status?',
@@ -171,32 +166,7 @@ $(function () {
     });
   });
 
-  // Validation rules and messages
-  $.validator.addMethod('regex', function (value, element, pattern) {
-    const regex = new RegExp(pattern);
-    return this.optional(element) || regex.test(value);
-  }, 'Invalid format.');
-
-  $.validator.addMethod('uniqueProductName', function (value, element) {
-    let valid = true;
-    if (!value) return true;
-    const excludeId = $('#productId').val() || null;
-    $.ajax({
-      url: '/products/check-name',
-      type: 'GET',
-      data: { name: value, exclude_id: excludeId },
-      async: false,
-      success: function (res) {
-        valid = !res.exists;
-      },
-      error: () => {
-        valid = true;
-      }
-    });
-    return valid;
-  }, 'This product name already exists.');
-
-  // Form validation setup
+  // Form Validation
   $('#productForm').validate({
     rules: {
       name: {
@@ -237,7 +207,8 @@ $(function () {
       let id = $('#productId').val();
       let url = id ? `/products/update/${id}` : '/products/create';
       let formData = new FormData(form);
-      if (!id) formData.delete('product_code'); // backend generates code on create
+      if (!id) formData.delete('product_code');
+
       $.ajax({
         url: url,
         method: 'POST',
@@ -250,10 +221,30 @@ $(function () {
             $.getJSON(`/products/get/${res.id}`, function (product) {
               let catName = $('#category option:selected').text();
               let brandName = $('#brand option:selected').text();
-              let imgHtml = product.image_path ? `<img src="/static/uploads/${product.image_path}" width="50" alt="Image"/>` : '-';
-              let statusHtml = `<div class="form-check form-switch"><input class="status-toggle form-check-input" type="checkbox" id="toggle-${product.id}" data-id="${product.id}" ${product.status === '1' ? 'checked' : ''}><label for="toggle-${product.id}"></label></div>`;
-              let actionsHtml = `<button class="btn btn-info btn-sm btn-edit">Edit</button> <button class="btn btn-danger btn-sm btn-delete">Delete</button>`;
-              let rowData = [product.id, product.product_code || '-', product.name, catName, brandName, imgHtml, statusHtml, actionsHtml];
+              let imgHtml = product.image_path
+                ? `<img src="/static/uploads/${product.image_path}" width="50" alt="Image"/>`
+                : '-';
+              let statusHtml = `
+                <div class="form-check form-switch">
+                  <input class="status-toggle form-check-input" type="checkbox" id="toggle-${product.id}" data-id="${product.id}" ${product.status === '1' ? 'checked' : ''}>
+                  <label for="toggle-${product.id}"></label>
+                </div>`;
+              let actionsHtml = `
+                <button class="btn btn-info btn-sm btn-edit">Edit</button>
+                <button class="btn btn-danger btn-sm btn-delete">Delete</button>`;
+
+              let rowData = [
+                product.id,
+                product.product_code || '-',
+                product.created_by || '-',
+                product.name,
+                catName,
+                brandName,
+                imgHtml,
+                statusHtml,
+                actionsHtml
+              ];
+
               if (id) {
                 let tr = $(`#productTable tbody tr[data-id='${id}']`);
                 table.row(tr).data(rowData).draw();
@@ -261,6 +252,7 @@ $(function () {
                 let newRow = table.row.add(rowData).draw();
                 $(newRow.node()).attr('data-id', product.id);
               }
+
               updateSerialNumbers();
               showToast(id ? 'Product updated successfully' : 'Product added successfully', 'bg-success');
             });
@@ -275,25 +267,54 @@ $(function () {
     }
   });
 
+  // Custom Regex Validator
+  $.validator.addMethod("regex", function (value, element, pattern) {
+    if (this.optional(element)) return true;
+    let regex = new RegExp(pattern);
+    return regex.test(value);
+  }, "Invalid format.");
+
+  // Unique Product Name Validator (sync for demo purposes)
+  $.validator.addMethod("uniqueProductName", function (value, element) {
+    let isSuccess = false;
+    let excludeId = $('#productId').val() || null;
+    $.ajax({
+      url: "/products/check-name",
+      type: "GET",
+      data: {
+        name: value,
+        exclude_id: excludeId
+      },
+      async: false, // Note: Blocking call
+      success: function (res) {
+        isSuccess = !res.exists;
+      }
+    });
+    return isSuccess;
+  }, "This product name already exists.");
+
+  // Serial number update
   function updateSerialNumbers() {
     if (!window.IS_ADMIN) {
-      table.column(0, { search: 'applied', order: 'applied', page: 'current' }).nodes().each(function (cell, i) {
-        cell.innerHTML = i + 1;
-      });
+      table.column(0, { search: 'applied', order: 'applied', page: 'current' })
+        .nodes().each(function (cell, i) {
+          cell.innerHTML = i + 1;
+        });
     }
   }
 
+  // Toast
   function showToast(message, className) {
-    var toastHTML = `<div class="toast align-items-center ${className} border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem;">
-      <div class="d-flex">
-        <div class="toast-body">${message}</div>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-    </div>`;
-    var $toast = $(toastHTML);
+    const toastHTML = `
+      <div class="toast align-items-center ${className} border-0 show" role="alert" aria-live="assertive" aria-atomic="true"
+           style="position: fixed; top: 1rem; right: 1rem;">
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>`;
+    const $toast = $(toastHTML);
     $('body').append($toast);
-    setTimeout(function () {
-      $toast.fadeOut(400, function () { $(this).remove(); });
-    }, 3500);
+    setTimeout(() => $toast.fadeOut(400, () => $toast.remove()), 3500);
   }
 });

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Supermarket Inventory{% endblock %}</title>
 
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+
     <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -22,13 +25,16 @@
       href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
       rel="stylesheet"
     />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" /> -->
 
     <!-- Custom CSS -->
     {% block extra_css %}{% endblock %}
   </head>
-  <body class="d-flex flex-column min-vh-100">
+  <body class="d-flex flex-column min-vh-100" style="background-color: #BBE1FA;">
     <!-- Navbar -->
-    {% include 'nav.html' %}
+    {% include 'partials/nav.html' %}
 
     <!-- Flash messages container for toasts -->
     <div
@@ -85,6 +91,6 @@
     <script src="{{ url_for('static', filename='js/brand.js') }}"></script>
     <script src="{{ url_for('static', filename='js/product.js') }}"></script>
     <script src="{{ url_for('static', filename='js/users.js') }}"></script>
-    {% endblock %} {% include 'footer.html' %}
+    {% endblock %} {% include 'partials/footer.html' %}
   </body>
 </html>

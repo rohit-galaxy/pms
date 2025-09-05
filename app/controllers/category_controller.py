@@ -15,7 +15,12 @@ def categories():
 def get_category(id):
     category = fetch_category_by_id(id)
     if category:
-        return jsonify(category)
+        return jsonify({
+            "id": category["id"],
+            "name": category["name"],
+            "status": category["status"],
+            "created_by": category["created_by"]
+        })
     return jsonify({"error": "Category not found"}), 404
 
 @category_bp.route("/create", methods=["POST"])
@@ -26,12 +31,12 @@ def create():
     if check_category_name_exists(name):
         return jsonify({"success": False, "message": "Category already exists."}), 409
     new_id = create_category(name)
-    # Fetch the newly created category to get its code and status for display
     category = fetch_category_by_id(new_id)
     return jsonify({
         "success": True,
         "id": new_id,
-        "category_code": category["category_code"],
+        "name": category["name"],
+        "created_by": category["created_by"],
         "status": category["status"],
         "message": "Category created successfully."
     })
@@ -49,9 +54,10 @@ def update(id):
     category = fetch_category_by_id(id)
     return jsonify({
         "success": True,
-        "status": category['status'],
         "id": id,
-        "category_code": category["category_code"],  # just like brand_code
+        "name": category["name"],
+        "created_by": category["created_by"],
+        "status": category["status"],
         "message": "Category updated successfully."
     })
 

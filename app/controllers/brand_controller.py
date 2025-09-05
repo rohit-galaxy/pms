@@ -18,7 +18,15 @@ def brands():
 def get_brand(id):
     brand = fetch_brand_by_id(id)
     if brand:
-        return jsonify(brand)
+        response = {
+            "id": brand["id"],
+            "name": brand["name"],
+            "brand_code": brand.get("brand_code", ""),
+            "category_id": brand["category_id"],
+            "status": brand["status"],
+            "created_by": brand.get("created_by", "")
+        }
+        return jsonify(response)
     return jsonify({"error": "Brand not found"}), 404
 
 @brand_bp.route("/create", methods=["POST"])
@@ -37,8 +45,9 @@ def create():
     return jsonify({
         "success": True,
         "id": new_id,
-        "brand_code": brand["brand_code"],
+        "brand_code": brand.get("brand_code", ""),
         "status": brand["status"],
+        "created_by": brand.get("created_by", ""),
         "message": "Brand created successfully."
     })
 
@@ -59,7 +68,8 @@ def update(id):
         "success": True,
         "status": brand['status'],
         "id": id,
-        "brand_code": brand["brand_code"],  # now available for UI if needed
+        "brand_code": brand.get("brand_code", ""),
+        "created_by": brand.get("created_by", ""),
         "message": "Brand updated successfully."
     })
 

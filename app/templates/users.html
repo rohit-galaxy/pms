@@ -1,167 +1,167 @@
-{% extends "base.html" %}
-{% block title %}User Management{% endblock %}
-{% block extra_css %}
-<link
-  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-  rel="stylesheet"
-/>
-<link
-  href="{{ url_for('static', filename='css/users.css') }}"
-  rel="stylesheet"
-/>
-{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">Users</h2>
-  <button class="btn btn-primary" id="btnAdd">Add User</button>
-</div>
-<table id="userTable" class="table table-striped">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>First Name</th>     <!-- NEW -->
-      <th>Last Name</th>      <!-- NEW -->
-      <th>Email</th>
-      <th>Role</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for u in users %}
-    <tr data-id="{{ u.id }}">
-      <td>{{ u.id }}</td>
-      <td>{{ u.first_name }}</td>
-      <td>{{ u.last_name }}</td>
-      <td>{{ u.email }}</td>
-      <td>{{ "Admin" if u.is_admin else "User" }}</td>
-      <td>
-        <div class="form-check form-switch">
-          <input type="checkbox" class="form-check-input status-toggle"
-          id="toggle-{{ u.id }}" data-id="{{ u.id }}" {% if u.status == '1'
-          %}checked{% endif %} />
-          <label class="form-check-label" for="toggle-{{ u.id }}"></label>
-        </div>
-      </td>
-      <td>
-        <button class="btn btn-sm btn-info btn-edit">Edit</button>
-        <button class="btn btn-sm btn-danger btn-delete">Delete</button>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<!-- User Modal -->
-<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="userForm" novalidate>
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 id="modalTitle" class="modal-title">Add User</h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-          ></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="userId" name="userId" />
-          <div class="mb-3">
-            <label for="first_name" class="form-label"
-              >First Name<span class="required-asterisk">*</span></label
-            >
-            <input
-              type="text"
-              id="first_name"
-              name="first_name"
-              class="form-control"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label for="last_name" class="form-label"
-              >Last Name<span class="required-asterisk">*</span></label
-            >
-            <input
-              type="text"
-              id="last_name"
-              name="last_name"
-              class="form-control"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label"
-              >Email<span class="required-asterisk">*</span></label
-            >
-            <input
-              type="email"
-              id="email"
-              name="email"
-              class="form-control"
-              autocomplete="off"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label"
-              >Password<span id="passwordAsterisk" class="required-asterisk"
-                >*</span
-              ></label
-            >
-            <input
-              type="password"
-              id="password"
-              name="password"
-              class="form-control"
-            />
-          </div>
-          <div class="mb-3">
-            <label for="confirm_password" class="form-label"
-              >Confirm Password<span
-                id="confirmPasswordAsterisk"
-                class="required-asterisk"
-                >*</span
-              ></label
-            >
-            <input
-              type="password"
-              id="confirm_password"
-              name="confirm_password"
-              class="form-control"
-            />
-          </div>
-          <div class="mb-3">
-            <label for="role" class="form-label"
-              >Role<span class="required-asterisk">*</span></label
-            >
-            <select id="is_admin" name="is_admin" class="form-select" required>
-              <option value="">Select Role</option>
-              <option value="1">Admin</option>
-              <option value="0">User</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Close
-          </button>
-          <button type="submit" class="btn btn-primary" id="saveBtn">
-            Save
-          </button>
-        </div>
-      </div>
-    </form>
+  {% extends "base.html" %}
+  {% block title %}User Management{% endblock %}
+  {% block extra_css %}
+  <link
+    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="{{ url_for('static', filename='css/users.css') }}"
+    rel="stylesheet"
+  />
+  {% endblock %}
+  {% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Users</h2>
+    <button class="btn btn-primary" id="btnAdd">Add User</button>
   </div>
-</div>
-{% endblock %}
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
-<script src="{{ url_for('static', filename='js/users.js') }}"></script>
-{% endblock %}
+  <table id="userTable" class="table table-striped table-hover table-bordered align-middle rounded-3 overflow-hidden shadow">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th>
+        <th>First Name</th>     <!-- NEW -->
+        <th>Last Name</th>      <!-- NEW -->
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr data-id="{{ u.id }}">
+        <td>{{ u.id }}</td>
+        <td>{{ u.first_name }}</td>
+        <td>{{ u.last_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ "Admin" if u.is_admin else "User" }}</td>
+        <td>
+          <div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input status-toggle"
+            id="toggle-{{ u.id }}" data-id="{{ u.id }}" {% if u.status == '1'
+            %}checked{% endif %} />
+            <label class="form-check-label" for="toggle-{{ u.id }}"></label>
+          </div>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-info btn-edit">Edit</button>
+          <button class="btn btn-sm btn-danger btn-delete">Delete</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <!-- User Modal -->
+  <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="userForm" novalidate>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 id="modalTitle" class="modal-title">Add User</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="userId" name="userId" />
+            <div class="mb-3">
+              <label for="first_name" class="form-label"
+                >First Name<span class="required-asterisk">*</span></label
+              >
+              <input
+                type="text"
+                id="first_name"
+                name="first_name"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="last_name" class="form-label"
+                >Last Name<span class="required-asterisk">*</span></label
+              >
+              <input
+                type="text"
+                id="last_name"
+                name="last_name"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label"
+                >Email<span class="required-asterisk">*</span></label
+              >
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="form-control"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label"
+                >Password<span id="passwordAsterisk" class="required-asterisk"
+                  >*</span
+                ></label
+              >
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-control"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="confirm_password" class="form-label"
+                >Confirm Password<span
+                  id="confirmPasswordAsterisk"
+                  class="required-asterisk"
+                  >*</span
+                ></label
+              >
+              <input
+                type="password"
+                id="confirm_password"
+                name="confirm_password"
+                class="form-control"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="role" class="form-label"
+                >Role<span class="required-asterisk">*</span></label
+              >
+              <select id="is_admin" name="is_admin" class="form-select" required>
+                <option value="">Select Role</option>
+                <option value="1">Admin</option>
+                <option value="0">User</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="submit" class="btn btn-primary" id="saveBtn">
+              Save
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endblock %}
+  {% block extra_js %}
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
+  <script src="{{ url_for('static', filename='js/users.js') }}"></script>
+  {% endblock %}

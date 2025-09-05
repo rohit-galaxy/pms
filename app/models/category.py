@@ -3,19 +3,11 @@ from app import get_connection
 from flask import session
 from app.models.user import fetch_user_by_id  # Adjust path if needed
 
-def generate_user_category_code(user_id):
+def get_user_email_prefix(user_id):
     user = fetch_user_by_id(user_id)
-    base = user["first_name"].capitalize() if user and user.get("first_name") else "USR"
-    conn = get_connection()
-    cursor = conn.cursor()
-    while True:
-        digits = random.randint(100, 999)
-        code = f"{base}{digits}"
-        cursor.execute("SELECT 1 FROM product_category WHERE category_code=%s", (code,))
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return code
+    if user and user.get("email"):
+        return user["email"].split("@")[0]
+    return "unknown"
 
 def fetch_all_categories():
     user_id = session.get('user_id')
@@ -30,6 +22,8 @@ def fetch_all_categories():
     query += " ORDER BY created_at DESC"
     cursor.execute(query, params)
     categories = cursor.fetchall()
+    for cat in categories:
+        cat["created_by"] = get_user_email_prefix(cat["user_id"])
     cursor.close()
     conn.close()
     return categories
@@ -47,6 +41,8 @@ def fetch_active_categories():
     query += " ORDER BY name"
     cursor.execute(query, params)
     categories = cursor.fetchall()
+    for cat in categories:
+        cat["created_by"] = get_user_email_prefix(cat["user_id"])
     cursor.close()
     conn.close()
     return categories
@@ -63,22 +59,19 @@ def fetch_category_by_id(category_id):
         params += (user_id,)
     cursor.execute(query, params)
     category = cursor.fetchone()
+    if category:
+        category["created_by"] = get_user_email_prefix(category["user_id"])
     cursor.close()
     conn.close()
     return category
 
 def create_category(name):
     user_id = session.get('user_id')
-    is_admin = session.get('is_admin', False)
-    if is_admin:
-        category_code = "superadmin"
-    else:
-        category_code = generate_user_category_code(user_id)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO product_category (name, category_code, status, user_id) VALUES (%s, %s, '1', %s)",
-        (name, category_code, user_id)
+        "INSERT INTO product_category (name, status, user_id) VALUES (%s, '1', %s)",
+        (name, user_id)
     )
     conn.commit()
     new_id = cursor.lastrowid
@@ -119,7 +112,6 @@ def toggle_category_status(category_id):
         cursor.close()
         conn.close()
         return None
-
     new_status = "0" if row["status"] == "1" else "1"
     update_query = "UPDATE product_category SET status=%s WHERE id=%s"
     update_params = (new_status, category_id)
@@ -137,14 +129,14 @@ def soft_delete_category(category_id):
     is_admin = session.get('is_admin', False)
     conn = get_connection()
     cursor = conn.cursor()
-    # Soft delete the category
+
     query = "UPDATE product_category SET status='2' WHERE id=%s"
     params = (category_id,)
     if not is_admin:
         query += " AND user_id = %s"
         params += (user_id,)
     cursor.execute(query, params)
-    # Find all brands in this category
+
     brand_query = "SELECT id FROM product_brand WHERE category_id=%s AND status != '2'"
     brand_params = (category_id,)
     if not is_admin:
@@ -152,14 +144,14 @@ def soft_delete_category(category_id):
         brand_params += (user_id,)
     cursor.execute(brand_query, brand_params)
     brand_ids = [row[0] for row in cursor.fetchall()]
-    # Soft delete those brands
+
     if brand_ids:
         brand_placeholders = ','.join(['%s'] * len(brand_ids))
         brand_update_query = f"UPDATE product_brand SET status='2' WHERE id IN ({brand_placeholders})"
         cursor.execute(brand_update_query, brand_ids)
-        # For all these brands, soft delete all their products
         prod_update_query = f"UPDATE product SET status='2' WHERE brand_id IN ({brand_placeholders})"
         cursor.execute(prod_update_query, brand_ids)
+
     conn.commit()
     cursor.close()
     conn.close()

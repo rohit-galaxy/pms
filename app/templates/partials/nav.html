@@ -1,7 +1,7 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark  mb-4" style="background-color: #1B262C;">
   <div class="container">
     <a class="navbar-brand" href="{{ url_for('product_bp.index') }}"
-      >Supermarket IMS</a
+      >Supermarket RDS</a
     >
     <button
       class="navbar-toggler"
@@ -52,6 +52,7 @@
               width="30"
               height="30"
             />
+            <span class="ms-2 text-white">{{ user_first_name }}</span>
           </a>
           <ul
             class="dropdown-menu dropdown-menu-end"

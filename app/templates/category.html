@@ -12,11 +12,12 @@
   <button class="btn btn-primary" id="btnAdd">Add Category</button>
 </div>
 
-<table id="categoryTable" class="table table-striped">
-  <thead>
+
+  <table id="categoryTable" class="table table-striped table-hover table-bordered align-middle rounded-3 overflow-hidden shadow">
+  <thead class="table-dark">
     <tr>
       <th>ID</th>
-      <th>Category Code</th> <!-- NEW -->
+      <th>Created By</th>  <!-- Added Created By column -->
       <th>Name</th>
       <th>Status</th>
       <th>Actions</th>
@@ -26,7 +27,7 @@
     {% for c in categories %}
     <tr data-id="{{ c.id }}">
       <td>{{ c.id }}</td>
-      <td>{{ c.category_code or '-' }}</td>
+      <td>{{ c.created_by or '-' }}</td>  <!-- Show creator email prefix -->
       <td class="category-name">{{ c.name|lower|trim }}</td>
       <td>
         <div class="form-check form-switch">
@@ -43,6 +44,9 @@
   </tbody>
 </table>
 
+
+
+
 <!-- Modal -->
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
@@ -50,13 +54,10 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="modalTitle">Add Category</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3" id="categoryCodeContainer" style="display: none;">
-            <label for="category_code" class="form-label">Category Code</label>
-            <input type="text" class="form-control" id="category_code" name="category_code" readonly />
-          </div>
+          <!-- Removed category code input and container entirely -->
           <div class="mb-3">
             <label for="categoryName" class="form-label">Category Name<span class="required-asterisk">*</span></label>
             <input type="text" class="form-control" id="categoryName" name="name" required autocomplete="off" />

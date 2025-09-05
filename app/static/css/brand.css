@@ -23,3 +23,14 @@
   font-weight: bold;
   margin-left: 4px;
 }
+/* Force table header colors for Brand Table */
+#brandTable thead {
+  background-color: #0F4C75 !important;
+}
+
+#brandTable thead th {
+  background-color: #0F4C75 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  text-transform: uppercase;
+}

@@ -19,21 +19,23 @@ def index():
 def get_product(id):
     product = fetch_product_by_id(id)
     if product:
+        # Ensure created_by is available (email prefix of creator)
+        product['created_by'] = product.get('created_by') or (product.get('creator_email', '').split('@')[0] if product.get('creator_email') else "")
         return jsonify(product)
     return jsonify({"error": "Product not found"}), 404
 
 @product_bp.route("/create", methods=["POST"])
 def create():
     name = request.form.get("name")
-    # product_code is NOT read from the form; will be created server-side
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
 
+    # Ensure all required fields
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
 
-    # product_code generation is handled internally
+    # Product code and created_by will be generated internally
     new_id = create_product(name, category_id, brand_id, None, file, current_app)
     return jsonify({"success": True, "id": new_id, "message": "Product created successfully."})
 
@@ -43,7 +45,6 @@ def update(id):
     category_id = request.form.get("category_id")
     brand_id = request.form.get("brand_id")
     file = request.files.get("image")
-
     if not name or not category_id or not brand_id:
         return jsonify({"success": False, "message": "Please fill all required fields."}), 400
 
