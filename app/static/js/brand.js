@@ -133,13 +133,13 @@ $(function () {
   });
 
   // Toggle status with confirmation
- // Handle status toggle with confirmation
-$('#brandTable').on('click', '.form-check-input.status-toggle', function (e) {
-  e.preventDefault(); // Stop checkbox from toggling
-
+$('#brandTable').on('change', '.form-check-input.status-toggle', function (e) {
   const checkbox = $(this);
   const id = checkbox.data('id');
-  const currentChecked = checkbox.prop('checked'); // true or false
+  const originalChecked = !checkbox.prop('checked'); // Capture current visual state before toggle
+
+  // Immediately revert the checkbox to prevent instant UI toggle
+  checkbox.prop('checked', originalChecked);
 
   Swal.fire({
     title: 'Are you sure?',
@@ -149,23 +149,18 @@ $('#brandTable').on('click', '.form-check-input.status-toggle', function (e) {
     confirmButtonText: 'Yes, change it',
     cancelButtonText: 'Cancel',
     reverseButtons: true
-  }).then(result => {
+  }).then((result) => {
     if (result.isConfirmed) {
-      // Call backend to change status
       $.post(`/brands/toggle-status/${id}`, function (res) {
         if (res.success) {
-          checkbox.prop('checked', res.status === '1'); // Update checkbox
+          checkbox.prop('checked', res.status === '1'); // Set checkbox based on DB status
           showToast(`Status changed to ${res.status === '1' ? 'Active' : 'Inactive'}`, 'bg-success');
         } else {
-          checkbox.prop('checked', currentChecked); // Revert if failed
           showToast('Failed to change status', 'bg-danger');
         }
       }).fail(() => {
-        checkbox.prop('checked', currentChecked); // Revert if error
         showToast('Server error', 'bg-danger');
       });
-    } else {
-      checkbox.prop('checked', currentChecked); // Revert on cancel
     }
   });
 });
