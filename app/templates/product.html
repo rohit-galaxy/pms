@@ -63,12 +63,12 @@
 
   <!-- Product Modal -->
   <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog ">
       <form id="productForm" enctype="multipart/form-data" novalidate>
         <div class="modal-content">
-          <div class="modal-header">
+          <div class="modal-header text-bold text-white">
             <h5 id="modalTitle" class="modal-title">Add Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <input type="hidden" id="productId" name="productId" />
@@ -111,8 +111,10 @@
   {% endblock %}
 
   {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
+    <script src="{{url_for('static', filename='js/select2.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/jquery.validate.min.js')}}"></script>
+    <script src="  {{url_for('static', filename='js/additional-methods.min.js')}}"></script>
     <script src="{{ url_for('static', filename='js/product.js') }}"></script>
   {% endblock %}
+
+  <!-- {{url_for('static', filename='js/select2.min.js')}} -->

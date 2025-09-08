@@ -39,7 +39,7 @@ def fetch_all_products():
         JOIN product_category c ON p.category_id = c.id
         JOIN product_brand b ON p.brand_id = b.id
         JOIN users u ON p.user_id = u.id
-        WHERE p.status != '2'
+        WHERE p.status != '2' and u.status !='2'
     """
     params = ()
     if not is_admin:

@@ -3,7 +3,6 @@ $(function () {
   const cpModal = cpModalEl ? new bootstrap.Modal(cpModalEl) : null;
 
   // Open modal for "self" from anywhere (e.g., nav link with data-bs-target="#changePasswordModal")
-  // When opened without a target user id, we assume self-change
   $(document).on("show.bs.modal", "#changePasswordModal", function () {
     const targetUserId = $("#cp_userId").val();
     const isAdminOverriding =

@@ -14,7 +14,7 @@ def fetch_all_categories():
     is_admin = session.get('is_admin', False)
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    query = "SELECT *, created_at, updated_at FROM product_category WHERE status != '2'"
+    query = "SELECT *, created_at, updated_at FROM product_category  WHERE status != '2' "
     params = ()
     if not is_admin:
         query += " AND user_id = %s"

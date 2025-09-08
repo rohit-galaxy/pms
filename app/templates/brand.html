@@ -49,12 +49,12 @@
 
 <!-- Brand Modal -->
 <div class="modal fade" id="brandModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-sm">
     <form id="brandForm" novalidate>
-      <div class="modal-content">
-        <div class="modal-header">
+      <div class="modal-content ">
+        <div class="modal-header text-white text-bold">
           <h5 class="modal-title" id="modalTitle">Add Brand</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3" id="brandCodeContainer" style="display:none;">
@@ -62,13 +62,13 @@
             <input type="text" class="form-control" id="brand_code" name="brand_code" readonly />
           </div>
           <div class="mb-3">
-            <label for="brandName" class="form-label">Brand Name <span class="text-danger">*</span></label>
+            <label for="brandName" class="form-label ">Brand Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="brandName" name="name" required autocomplete="off" />
             <div id="nameError" class="error-message"></div>
           </div>
           <div class="mb-3">
             <label for="categorySelect" class="form-label">Category <span class="text-danger">*</span></label>
-            <select class="form-select" id="categorySelect" name="category_id" required>
+            <select class="form-select rounded-3" id="categorySelect" name="category_id" required>
               <option value="">Select Category</option>
               {% for c in categories %}
               <option value="{{ c.id }}">{{ c.name }}</option>
@@ -77,7 +77,7 @@
             <div id="categoryError" class="error-message">Please select a category.</div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer border-0 px-4 py-2">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button id="saveBtn" class="btn btn-primary" type="submit">Save</button>
         </div>

@@ -39,3 +39,10 @@
   font-weight: 600;
   text-transform: uppercase;
 }
+
+.modal-header{
+  background-color:#1B262C ;
+}
+.modal-footer{
+  background-color: #BBE1FA;
+}

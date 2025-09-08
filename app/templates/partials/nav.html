@@ -17,11 +17,7 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         {% if session.get('is_authenticated') %}
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('product_bp.index') }}"
-            >Products</a
-          >
-        </li>
+        
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('category_bp.categories') }}"
             >Categories</a
@@ -29,6 +25,11 @@
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('brand_bp.brands') }}">Brands</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('product_bp.index') }}"
+            >Products</a
+          >
         </li>
         {% if session.get('is_admin') %}
         <li class="nav-item">
