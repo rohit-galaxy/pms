@@ -84,21 +84,35 @@ $(function () {
       if (res.success) {
         showToast(editingId ? 'Brand updated successfully' : 'Brand added successfully', 'bg-success');
         modal.hide();
-        let brandCode = res.brand_code || $('#brand_code').val() || '-';
-        let categoryName = $('#categorySelect option:selected').text();
+
         let statusHtml = `<div class="form-check form-switch">
           <input class="status-toggle form-check-input" type="checkbox" id="toggle-${res.id}" data-id="${res.id}" ${res.status === '1' ? 'checked' : ''}>
           <label for="toggle-${res.id}" class="form-check-label"></label>
         </div>`;
         let actionsHtml = '<button class="btn btn-info btn-sm btn-edit">Edit</button> <button class="btn btn-danger btn-sm btn-delete">Delete</button>';
-        let rowData = [res.id, brandCode, $('#brandName').val().toLowerCase(), categoryName, statusHtml, actionsHtml];
+
+        const isAdmin = window.IS_ADMIN === 'true';
+        let brandCode = res.brand_code || $('#brand_code').val() || '-';
+        let categoryName = $('#categorySelect option:selected').text();
+        if (!isAdmin && categoryName.includes('~')) {
+          categoryName = categoryName.split('~')[0].trim();
+        }
+        let brandName = $('#brandName').val().toLowerCase();
+
+        let rowData;
+        if (isAdmin) {
+          rowData = [res.id, brandCode, brandName, categoryName, statusHtml, actionsHtml];
+        } else {
+          rowData = [brandCode, brandName, categoryName, statusHtml, actionsHtml];
+        }
+
         if (editingId) {
           let row = table.row($(`tr[data-id='${editingId}']`));
           row.data(rowData).draw(false);
         } else {
           let rowNode = table.row.add(rowData).draw(false).node();
           $(rowNode).attr('data-id', res.id);
-          $(rowNode).find('td:eq(2)').addClass('brand-name').attr('data-category', $('#categorySelect').val());
+          $(rowNode).find('td:eq(' + (isAdmin ? 2 : 1) + ')').addClass('brand-name').attr('data-category', $('#categorySelect').val());
         }
       } else {
         $('#brandName').addClass('error');
@@ -133,38 +147,36 @@ $(function () {
   });
 
   // Toggle status with confirmation
-$('#brandTable').on('change', '.form-check-input.status-toggle', function (e) {
-  const checkbox = $(this);
-  const id = checkbox.data('id');
-  const originalChecked = !checkbox.prop('checked'); // Capture current visual state before toggle
+  $('#brandTable').on('change', '.form-check-input.status-toggle', function (e) {
+    const checkbox = $(this);
+    const id = checkbox.data('id');
+    const originalChecked = !checkbox.prop('checked');
 
-  // Immediately revert the checkbox to prevent instant UI toggle
-  checkbox.prop('checked', originalChecked);
+    checkbox.prop('checked', originalChecked);
 
-  Swal.fire({
-    title: 'Are you sure?',
-    text: 'Do you want to change the brand status?',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, change it',
-    cancelButtonText: 'Cancel',
-    reverseButtons: true
-  }).then((result) => {
-    if (result.isConfirmed) {
-      $.post(`/brands/toggle-status/${id}`, function (res) {
-        if (res.success) {
-          checkbox.prop('checked', res.status === '1'); // Set checkbox based on DB status
-          showToast(`Status changed to ${res.status === '1' ? 'Active' : 'Inactive'}`, 'bg-success');
-        } else {
-          showToast('Failed to change status', 'bg-danger');
-        }
-      }).fail(() => {
-        showToast('Server error', 'bg-danger');
-      });
-    }
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to change the brand status?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, change it',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.post(`/brands/toggle-status/${id}`, function (res) {
+          if (res.success) {
+            checkbox.prop('checked', res.status === '1');
+            showToast(`Status changed to ${res.status === '1' ? 'Active' : 'Inactive'}`, 'bg-success');
+          } else {
+            showToast('Failed to change status', 'bg-danger');
+          }
+        }).fail(() => {
+          showToast('Server error', 'bg-danger');
+        });
+      }
+    });
   });
-});
-
 
   // Delete brand with confirmation
   $('#brandTable').on('click', '.btn-delete', function () {

@@ -1,3 +1,4 @@
+import bcrypt
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app.models.user import authenticate_user, fetch_user_by_email,fetch_user_by_id
 auth_bp = Blueprint('auth_bp', __name__)
@@ -60,11 +61,12 @@ def validate_old_password():
     old_password = request.form.get("old_password", "").strip()
 
     user = fetch_user_by_id(user_id)
-    if not user:
+    if not user or not old_password:
         return jsonify({"valid": False})
 
     stored_password = user["password"]
-    is_valid = (old_password == stored_password)
+    is_valid = bcrypt.checkpw(old_password.encode("utf-8"), stored_password.encode("utf-8"))
+
     return jsonify({"valid": is_valid})
 
 @auth_bp.route("/validate-login", methods=["POST"])

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Supermarket Inventory{% endblock %}</title>
 
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Bootstrap CSS -->
     <link
@@ -27,14 +28,20 @@
       href="    {{ url_for('static', filename='css/select2.min.css') }}"
       rel="stylesheet"
     />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
 
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+    <link
+      href="{{ url_for('static', filename='css/style.css') }}"
+      rel="stylesheet"
+    />
 
     <!-- Custom CSS -->
     {% block extra_css %}{% endblock %}
   </head>
-  <body class="d-flex flex-column min-vh-100" >
+  <body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->
     {% include 'partials/nav.html' %}
 
@@ -85,6 +92,9 @@
           toast.show();
         });
       });
+    </script>
+    <script>
+      window.IS_ADMIN = {{ 'true' if session.get('is_admin') else 'false' }};
     </script>
 
     <!-- Custom JS -->

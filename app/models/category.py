@@ -14,7 +14,8 @@ def fetch_all_categories():
     is_admin = session.get('is_admin', False)
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    query = "SELECT *, created_at, updated_at FROM product_category  WHERE status != '2' "
+    query = "SELECT c.*, u.email AS creator_email FROM product_category c JOIN users u ON c.user_id = u.id WHERE c.status != '2' AND u.status != '2'"
+
     params = ()
     if not is_admin:
         query += " AND user_id = %s"
@@ -33,12 +34,17 @@ def fetch_active_categories():
     is_admin = session.get('is_admin', False)
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    query = "SELECT *, created_at, updated_at FROM product_category WHERE status='1'"
+    query = """
+        SELECT c.*, c.created_at, c.updated_at, u.email AS creator_email
+        FROM product_category c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.status = '1' AND u.status != '2'
+    """
     params = ()
     if not is_admin:
-        query += " AND user_id = %s"
+        query += " AND c.user_id = %s"
         params = (user_id,)
-    query += " ORDER BY name"
+    query += " ORDER BY c.name"
     cursor.execute(query, params)
     categories = cursor.fetchall()
     for cat in categories:

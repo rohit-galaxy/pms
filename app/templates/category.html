@@ -16,7 +16,9 @@
   <table id="categoryTable" class="table table-striped table-hover table-bordered align-middle rounded-3 overflow-hidden shadow">
   <thead>
     <tr>
+      {% if session.get('is_admin') %}
       <th>ID</th>
+      {% endif %}
       <th>Created By</th>  <!-- Added Created By column -->
       <th>Name</th>
       <th>Status</th>
@@ -26,7 +28,9 @@
   <tbody>
     {% for c in categories %}
     <tr data-id="{{ c.id }}">
+      {% if session.get('is_admin') %}
       <td>{{ c.id }}</td>
+      {% endif %}
       <td>{{ c.created_by or '-' }}</td>  <!-- Show creator email prefix -->
       <td class="category-name">{{ c.name|lower|trim }}</td>
       <td>

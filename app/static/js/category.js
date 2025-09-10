@@ -1,7 +1,7 @@
 $(function () {
   const modal = new bootstrap.Modal($("#categoryModal")[0]);
   const table = $("#categoryTable").DataTable({
-    order: [[0, "desc"]]
+    order: [[0, "desc"]],
   });
 
   // Show Add Category modal
@@ -43,7 +43,7 @@ $(function () {
       showCancelButton: true,
       confirmButtonText: "Yes, delete it",
       cancelButtonText: "Cancel",
-      reverseButtons: true
+      reverseButtons: true,
     }).then((result) => {
       if (result.isConfirmed) {
         $.post(`/categories/delete/${id}`, function (res) {
@@ -73,13 +73,17 @@ $(function () {
       showCancelButton: true,
       confirmButtonText: "Yes, change it",
       cancelButtonText: "Cancel",
-      reverseButtons: true
+      reverseButtons: true,
     }).then((result) => {
       if (result.isConfirmed) {
         $.post(`/categories/toggle-status/${id}`, function (res) {
           if (res.success) {
             checkbox.prop("checked", res.status === "1");
-            showToast("Status changed to " + (res.status === "1" ? "Active" : "Inactive"), "bg-success");
+            showToast(
+              "Status changed to " +
+                (res.status === "1" ? "Active" : "Inactive"),
+              "bg-success"
+            );
           } else {
             showToast("Failed to change status", "bg-danger");
           }
@@ -94,15 +98,16 @@ $(function () {
       name: {
         required: true,
         regex: "^[A-Za-z0-9\\s\\-\\_\\.,'()%]{2,50}$",
-        uniqueCategoryName: true
-      }
+        uniqueCategoryName: true,
+      },
     },
     messages: {
       name: {
         required: "Please enter category name",
-        regex: "Name must be 2–50 characters: letters, numbers, spaces, and - _ . , ' ( ) % only",
-        uniqueCategoryName: "This category already exists."
-      }
+        regex:
+          "Name must be 2–50 characters: letters, numbers, spaces, and - _ . , ' ( ) % only",
+        uniqueCategoryName: "This category already exists.",
+      },
     },
     errorElement: "div",
     errorClass: "error-message",
@@ -120,67 +125,102 @@ $(function () {
       let url = id ? `/categories/update/${id}` : "/categories/create";
       $.post(url, { name: $("#categoryName").val().trim() }, function (res) {
         if (res.success) {
-          showToast(id ? "Category updated successfully" : "Category added successfully", "bg-success");
+          showToast(
+            id
+              ? "Category updated successfully"
+              : "Category added successfully",
+            "bg-success"
+          );
           modal.hide();
-          let name = res.name;
-          let created_by = res.created_by || "-";
-          let statusHtml = `<div class="form-check form-switch">
-              <input type="checkbox" class="form-check-input status-toggle" id="toggle-${res.id || id}" data-id="${res.id || id}" ${res.status === "1" || !id ? "checked" : ""}>
-              <label class="form-check-label" for="toggle-${res.id || id}"></label>
-            </div>`;
-          let actionsHtml = `
-            <button class="btn btn-sm btn-info btn-edit">Edit</button>
-            <button class="btn btn-sm btn-danger btn-delete">Delete</button>
-          `;
-          let rowData = [
-            res.id || id,
-            created_by,
-            name,
-            statusHtml,
-            actionsHtml
-          ];
+
+          const isAdmin = window.IS_ADMIN === "true";
+          let rowData;
+          if (isAdmin) {
+            rowData = [
+              res.id || id,
+              res.created_by || "-",
+              res.name,
+              `<div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input status-toggle" id="toggle-${
+              res.id || id
+            }" data-id="${res.id || id}" ${
+                res.status === "1" || !id ? "checked" : ""
+              }>
+            <label class="form-check-label" for="toggle-${
+              res.id || id
+            }"></label>
+          </div>`,
+              `<button class="btn btn-sm btn-info btn-edit">Edit</button>
+          <button class="btn btn-sm btn-danger btn-delete">Delete</button>`,
+            ];
+          } else {
+            rowData = [
+              res.created_by || "-",
+              res.name,
+              `<div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input status-toggle" id="toggle-${
+              res.id || id
+            }" data-id="${res.id || id}" ${
+                res.status === "1" || !id ? "checked" : ""
+              }>
+            <label class="form-check-label" for="toggle-${
+              res.id || id
+            }"></label>
+          </div>`,
+              `<button class="btn btn-sm btn-info btn-edit">Edit</button>
+          <button class="btn btn-sm btn-danger btn-delete">Delete</button>`,
+            ];
+          }
+
           if (id) {
             let tr = $(`#categoryTable tbody tr[data-id='${id}']`);
             table.row(tr).data(rowData).draw(false);
           } else {
             let rowNode = table.row.add(rowData).draw(false).node();
             $(rowNode).attr("data-id", res.id);
-            $(rowNode).find("td:eq(2)").addClass("category-name");
+            if (!isAdmin) {
+              $(rowNode).find("td:eq(0)").addClass("category-name");
+            } else {
+              $(rowNode).find("td:eq(2)").addClass("category-name");
+            }
             table.row(rowNode).scrollTo();
           }
         } else {
           $("#categoryName").addClass("error");
-          $("#nameError").text(res.message || "Error").removeClass("d-none");
+          $("#nameError")
+            .text(res.message || "Error")
+            .removeClass("d-none");
         }
-      }).fail(() => {
-        $("#categoryName").addClass("error");
-        $("#nameError").text("Server error occurred").removeClass("d-none");
       });
-    }
+    },
   });
 
-  $.validator.addMethod("regex", function(value, element, pattern) {
+  $.validator.addMethod("regex", function (value, element, pattern) {
     return this.optional(element) || new RegExp(pattern).test(value);
   });
 
-  $.validator.addMethod("uniqueCategoryName", function(value) {
-    let isSuccess = false;
-    if (!value) return true;
-    let excludeId = $("#categoryModal").data("category-id") || null;
-    $.ajax({
-      url: "/categories/check-name",
-      type: "GET",
-      data: { name: value, exclude_id: excludeId },
-      async: false,
-      success: function(res) {
-        isSuccess = !res.exists;
-      },
-      error: function() {
-        isSuccess = true;
-      }
-    });
-    return isSuccess;
-  }, "This category already exists.");
+  $.validator.addMethod(
+    "uniqueCategoryName",
+    function (value) {
+      let isSuccess = false;
+      if (!value) return true;
+      let excludeId = $("#categoryModal").data("category-id") || null;
+      $.ajax({
+        url: "/categories/check-name",
+        type: "GET",
+        data: { name: value, exclude_id: excludeId },
+        async: false,
+        success: function (res) {
+          isSuccess = !res.exists;
+        },
+        error: function () {
+          isSuccess = true;
+        },
+      });
+      return isSuccess;
+    },
+    "This category already exists."
+  );
 
   // Toast helper function
   function showToast(message, className) {
@@ -192,7 +232,7 @@ $(function () {
         </div>
       </div>`;
     let $toast = $(toastHtml);
-    $('body').append($toast);
+    $("body").append($toast);
     setTimeout(() => $toast.fadeOut(400, () => $toast.remove()), 3500);
   }
 });
